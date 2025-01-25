@@ -73,16 +73,21 @@ public static class ApiEndpoints {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
             string file_name, string file_path, string file_type, IFormFile file,
-            IContentService contentService) =>
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
-            string groupName = file_path.Split("/").First();
-            int index = file_path.IndexOf("/");
-            string subPath = "";
-            if (index > 0) {
-                subPath = file_path.Substring(index + 1);
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
             }
 
-            if(! await contentService.CheckGroupExists(groupName)) {
+            var spl = file_path.Split("/");
+            string groupName = spl.First();
+            string subGroupName = "";
+            if (spl.Length > 1) {
+                subGroupName = spl[1];
+            }
+
+            if(! await contentService.CheckGroupExists(groupName, user.Id)) {
                 return Results.NotFound("group not found by name");
             }
 
@@ -94,6 +99,9 @@ public static class ApiEndpoints {
             }
 
             // get transcription
+            if (file_type != "mp3") {
+                throw new Exception("not implemented other filetype support");
+            }
             var transcript = await GetTranscription(tempPath);
 
             // save transcription to group
@@ -104,7 +112,7 @@ public static class ApiEndpoints {
                 Text = transcript.Text ?? ""
             };
 
-            var scfResp = await contentService.SaveContentFile(contentFile, groupName);
+            var scfResp = await contentService.SaveContentFile(contentFile, groupName, subGroupName, user.Id);
             if (!scfResp) {
                 return Results.NotFound("group not found by name");
             }
@@ -127,6 +135,11 @@ public static class ApiEndpoints {
     private static void TestEndpoints(this WebApplication app) {
         app.MapGet("/", () => {
             return "hello world!";
+        });
+
+        app.MapGet("/checkIfLoggedIn", async () => {
+
+
         });
 
         app.MapGet("/createTestUser", async (IUserService userService) => {

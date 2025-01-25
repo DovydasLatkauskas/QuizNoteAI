@@ -11,21 +11,40 @@ public class ContentService : IContentService {
         _context = context;
     }
 
-    public async Task<bool> CheckGroupExists(string groupName) {
-        var grp = await _context.Groups.Include(g => g.Subgroups)
+    public async Task<bool> CheckGroupExists(string groupName, string userId) {
+        var grp = await _context.Groups.Where(g => g.OwnerId == Guid.Parse(userId))
             .FirstOrDefaultAsync(g => g.Name == groupName);
 
         return grp is not null;
     }
 
-    public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName) {
-        var grp = await _context.Groups.Include(g => g.Subgroups)
-            .FirstOrDefaultAsync(g => g.Name == groupName);
+    public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string subGroupName, string userId) {
+        var usr = await _context.Users.Include(u=> u.Groups)
+            .ThenInclude(g => g.Subgroups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (usr is null) {
+            return false;
+        }
+
+        var grp = usr.Groups.FirstOrDefault(g => g.Name == groupName);
         if (grp is null) {
             return false;
         }
 
-        grp.ContentFiles.Add(contentFile);
+        if (subGroupName == "") {
+            grp.ContentFiles.Add(contentFile);
+        }
+        else {
+            var subg = grp.Subgroups.FirstOrDefault(sg=> sg.Name == subGroupName);
+            if (subg is null) {
+                var sg = new Subgroup();
+                sg.ContentFiles.Add(contentFile);
+                grp.Subgroups.Add(sg);
+            }
+            else {
+                subg.ContentFiles.Add(contentFile);
+            }
+        }
 
         await _context.SaveChangesAsync();
         return true;
@@ -60,8 +79,8 @@ public class ContentService : IContentService {
 }
 
 public interface IContentService {
-    public Task<bool> SaveContentFile(ContentFile contentFile, string group);
-    public Task<bool> CheckGroupExists(string groupName);
+    public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string subGroupName, string userId);
+    public Task<bool> CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(User user);
 }
 
