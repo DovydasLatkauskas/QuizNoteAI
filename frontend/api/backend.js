@@ -37,8 +37,11 @@ export const getGeminiJoke = async () => {
 
 export const registerUser = async (registrationData) => {
     try {
-        const response = await apiClient.post('/register-v2', registrationData);
-        return response.data;
+        const signUpResponse = await apiClient.post('/register-v2', registrationData);
+        const loginResponse = await apiClient.post('/login', {email: registrationData.email, password: registrationData.password});
+        console.log('response:', loginResponse);
+        localStorage.setItem('token', loginResponse.data['accessToken']);
+        return loginResponse.data;
     } catch (error) {
         console.error('Error registering user:', error);
         throw error;
@@ -47,9 +50,7 @@ export const registerUser = async (registrationData) => {
 
 export const loginUser = async (loginData) => {
     try {
-        console.log('loginData:', loginData);
         const response = await apiClient.post('/login', loginData);
-        console.log('response:', response);
         localStorage.setItem('token', response.data['accessToken']);
         return response.data;
     } catch (error) {
