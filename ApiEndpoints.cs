@@ -137,9 +137,19 @@ public static class ApiEndpoints {
             return "hello world!";
         });
 
-        app.MapGet("/checkIfLoggedIn", async () => {
+        app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
+            IUserService userService) => {
 
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
 
+            var userDetails = await userService.GetUserDetails(user.Id);
+            if (userDetails is null) {
+                return Results.Unauthorized();
+            }
+            return Results.Json(userDetails);
         });
 
         app.MapGet("/createTestUser", async (IUserService userService) => {
