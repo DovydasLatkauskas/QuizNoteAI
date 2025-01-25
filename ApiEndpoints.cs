@@ -61,7 +61,7 @@ public static class ApiEndpoints {
                                     Please provide the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
                                       ""quiz"": {{
-                                        ""title"": ""<Please provide the title of the quiz>"",
+                                        ""title"": ""<Please provide the title of the quiz fewer than 30 characters>"",
                             
                                         ""questions"": [
                                           {{
@@ -158,7 +158,7 @@ public static class ApiEndpoints {
             string combinedPrompt = $@"Please summarize the information provided. Focus on the key points, important concepts, and any notable details which might be necessary to study the material. Keep the summary concise, clear, and to the point. Provide the answer .\n\n +
                                     Please summarize the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
-                                        ""document title"": ""<Please provide a title for the document.>""
+                                        ""document title"": ""<Please provide a title for the document fewer than 30 characters. >""
                                         ""summary"": ""<Please provide a summary of the document.>""
                                     }}
                                     Now here is the content to summarize: "; 
