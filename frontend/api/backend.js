@@ -37,9 +37,8 @@ export const getGeminiJoke = async () => {
 
 export const registerUser = async (registrationData) => {
     try {
-        const signUpResponse = await apiClient.post('/register-v2', registrationData);
+        await apiClient.post('/register-v2', registrationData);
         const loginResponse = await apiClient.post('/login', {email: registrationData.email, password: registrationData.password});
-        console.log('response:', loginResponse);
         localStorage.setItem('token', loginResponse.data['accessToken']);
         return loginResponse.data;
     } catch (error) {
@@ -62,10 +61,21 @@ export const loginUser = async (loginData) => {
 export const getUserProfile = async () => {
     try {
         const response = await apiClient.get('/profile');
-        console.log('response:', response);
         return response.data;
     } catch (error) {
         console.error('Error fetching user profile:', error);
+        throw error;
+    }
+}
+
+export const getQuiz = async (quizID) => {
+    try {
+        // const response = await apiClient.get('/quiz', {quizID: quizID});
+        // console.log('response:', response);
+        // return response.data;
+        return "WIP";
+    } catch (error) {
+        console.error('Error fetching quiz:', error);
         throw error;
     }
 }
