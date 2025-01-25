@@ -82,7 +82,8 @@ public class ContentService : IContentService {
     }
 
     public async Task<bool> CreateGroup(string userId, string groupName) {
-        var grps = _context.Groups.Where(g => g.UserId == userId).ToList();
+        var grps = _context.Groups.Include(g=> g.User)
+            .Where(g => g.UserId == userId).ToList();
         if (grps.Any(g=> g.Name == groupName)) {
             return false;
         }
@@ -181,6 +182,12 @@ public class ContentService : IContentService {
             return false;
         }
     }
+
+    public async Task<List<ContentFile>> GetContentFilesByIds(List<string> idsOfFiles, string userId) {
+        return await _context.ContentFiles.Include(cf => cf.Group)
+            .ThenInclude(g => g.User)
+            .Where(cf => idsOfFiles.Contains(cf.Id.ToString()) && cf.Group.UserId == userId).ToListAsync();
+    }
 }
 
 public interface IContentService {
@@ -192,6 +199,7 @@ public interface IContentService {
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
     Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
     Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId);
+    Task<List<ContentFile>> GetContentFilesByIds(List<string> idsOfFiles, string userId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
