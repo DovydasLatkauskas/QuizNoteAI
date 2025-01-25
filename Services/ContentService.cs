@@ -108,9 +108,36 @@ public class ContentService : IContentService {
         }
 
         usr.Groups.Remove(group);
-
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName)
+    {
+        var usr = await _context.Users
+            .Include(u => u.Groups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (usr == null)
+        {
+            return false;
+        }
+
+        var group = usr.Groups.FirstOrDefault(g => g.Name == oldGroupName);
+        if (group == null)
+        {
+            return false;
+        }
+
+        if (usr.Groups.Any(g => g.Name == newGroupName))
+        {
+            return false;
+        }
+
+        group.Name = newGroupName;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
 
 
     // public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
@@ -132,6 +159,7 @@ public interface IContentService {
     Task<UserTreeDto> GetUserGroupTree(string userId);
     Task<bool> CreateGroup(string userId, string groupName);
     Task DeleteGroup(string userId, string groupName);
+    Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
