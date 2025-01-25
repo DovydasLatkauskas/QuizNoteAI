@@ -92,7 +92,7 @@ public static class ApiEndpoints {
             }
 
             // save file to temp storage
-            string tempPath = Path.GetTempPath();
+            string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
             using (var stream = File.Create(tempPath))
             {
                 await file.CopyToAsync(stream);
@@ -103,6 +103,8 @@ public static class ApiEndpoints {
                 throw new Exception("not implemented other filetype support");
             }
             var transcript = await GetTranscription(tempPath);
+
+            File.Delete(tempPath);
 
             // save transcription to group
             var contentFile = new ContentFile {
