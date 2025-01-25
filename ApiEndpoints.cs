@@ -41,7 +41,36 @@ public static class ApiEndpoints {
         return TypedResults.ValidationProblem(errorDictionary);
     }
 
-    public static void AddApiEndpoints(this WebApplication app) {
+    private static void GetTranscription(string tempServerFilePath) {
+        var fi = new FileInfo(tempServerFilePath);
+        // call transcript api
+
+
+        throw new NotImplementedException();
+    }
+
+    public static void ContentEndpoints(this WebApplication app) {
+        // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
+        app.MapPost("/insert-file", (string file_name, string file_path, string file_type) => {
+            string group = file_path.Split("/").First();
+            int index = file_path.IndexOf("/");
+            if (index > 0) {
+                string subPath = file_path.Substring(index + 1);
+            }
+
+            // save file to temp storage
+
+            // get transcription
+
+            string tempServerFilePath = "";
+            
+            GetTranscription(tempServerFilePath);
+
+            // save transcription to group
+        });
+    }
+
+    public static void TestEndpoints(this WebApplication app) {
         app.MapGet("/", () => {
             return "hello world!";
         });
@@ -83,6 +112,12 @@ public static class ApiEndpoints {
 
             return Results.Text(responseBody);
         });
+    }
+
+    public static void AddApiEndpoints(this WebApplication app) {
+        app.ContentEndpoints();
+
+        app.TestEndpoints();
 
         app.MapPost("/register-v2", async Task<Results<Ok, ValidationProblem>>
             ([FromBody] RegisterRequestDto registration, HttpContext context, [FromServices] IServiceProvider sp) =>
