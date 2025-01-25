@@ -70,7 +70,6 @@ public static class ApiEndpoints {
     }
 
     private static void ContentEndpoints(this WebApplication app) {
-        // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
             string fileName, string groupName, string? subGroupName, IFormFile file,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
