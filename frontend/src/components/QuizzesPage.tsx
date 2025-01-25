@@ -5,13 +5,13 @@ import ExpandableCardDemo from "@/components/ExpandableCardDemo"
 export default function QuizzesPage(){
   const colorBank = ["bg-blue-200", "bg-green-200", "bg-yellow-200", "bg-red-200", "bg-purple-200", "bg-pink-200", "bg-indigo-200", "bg-gray-200", "bg-orange-200"]
 
-  // Load all quizes in this format:
+  // Load all quizzes in this format:
   type QuizContent = {
+    quizID: number;
     title: string;
     description: string; // For the card
     ctaText: string; // For the card
     ctaLink: string; // For the card
-    content: string; // For the card
     imageNumber: number; // For the card image
     sources: string[];
     questions: {
@@ -30,11 +30,11 @@ export default function QuizzesPage(){
 
   let quizzes: QuizContent[] = [
     {
+      quizID: 1,
       title:"Capitals and Countries",
       description: "Test your knowledge of world capitals!",
       ctaText: "Start Quiz",
-      ctaLink: "/quiz/1",
-      content: "This quiz will test your knowledge of world capitals. Good luck!",
+      ctaLink: `/Dashboard/Quizzes/${1}`,
       imageNumber: 1,
       sources: ["slides-week-1.pdf"],
       questions: [
@@ -65,11 +65,11 @@ export default function QuizzesPage(){
       ],
     },
     {
+      quizID: 2,
       title:"Star Wars Trivia",
       description: "Test your knowledge of Star Wars!",
       ctaText: "Start Quiz",
-      ctaLink: "/quiz/2",
-      content: "This quiz will test your knowledge of Star Wars. Good luck!",
+      ctaLink: `/Dashboard/Quizzes/${2}`,
       imageNumber: 2,
       sources: ["star-wars-info.pdf"],
       questions: [
