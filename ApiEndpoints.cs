@@ -94,6 +94,8 @@ public static class ApiEndpoints {
 
             return Results.Ok();
         });
+
+        app.MapGet("/sh");
     }
 
     public static void TestEndpoints(this WebApplication app) {
