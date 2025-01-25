@@ -73,16 +73,21 @@ public static class ApiEndpoints {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
             string file_name, string file_path, string file_type, IFormFile file,
-            IContentService contentService) =>
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
-            string groupName = file_path.Split("/").First();
-            int index = file_path.IndexOf("/");
-            string subPath = "";
-            if (index > 0) {
-                subPath = file_path.Substring(index + 1);
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
             }
 
-            if(! await contentService.CheckGroupExists(groupName)) {
+            var spl = file_path.Split("/");
+            string groupName = spl.First();
+            string subGroupName = "";
+            if (spl.Length > 1) {
+                subGroupName = spl[1];
+            }
+
+            if(! await contentService.CheckGroupExists(groupName, user.Id)) {
                 return Results.NotFound("group not found by name");
             }
 
@@ -94,19 +99,20 @@ public static class ApiEndpoints {
             }
 
             // get transcription
+            if (file_type != "mp3") {
+                throw new Exception("not implemented other filetype support");
+            }
             var transcript = await GetTranscription(tempPath);
 
             // save transcription to group
             var contentFile = new ContentFile {
                 Id = Guid.NewGuid(),
                 Name = file_name,
-                SubgroupPath = subPath,
                 UploadedAtUtc = DateTime.UtcNow,
-                Text = transcript.Text ?? "",
-                Summary = null
+                Text = transcript.Text ?? ""
             };
 
-            var scfResp = await contentService.SaveContentFile(contentFile, groupName);
+            var scfResp = await contentService.SaveContentFile(contentFile, groupName, subGroupName, user.Id);
             if (!scfResp) {
                 return Results.NotFound("group not found by name");
             }
@@ -114,20 +120,26 @@ public static class ApiEndpoints {
             return Results.Ok();
         });
 
-        // app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
-        //     IContentService contentService) => {
-        //     var user = await userManager.GetUserAsync(httpContext.User);
-        //     if (user is null) {
-        //         return Results.Unauthorized();
-        //     }
-        //
-        //     string groupTree = await contentService.GetUserGroupTree(user);
-        // });
+        app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
+            IContentService contentService) => {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            var groupTree = await contentService.GetUserGroupTree(user);
+            return Results.Json(groupTree);
+        });
     }
 
     private static void TestEndpoints(this WebApplication app) {
         app.MapGet("/", () => {
             return "hello world!";
+        });
+
+        app.MapGet("/checkIfLoggedIn", async () => {
+
+
         });
 
         app.MapGet("/createTestUser", async (IUserService userService) => {
