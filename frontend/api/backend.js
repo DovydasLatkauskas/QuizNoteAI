@@ -58,7 +58,7 @@ export const getSummary = async () => {
 
 export const registerUser = async (registrationData) => {
     try {
-        await apiClient.post('/register-v2', registrationData);
+        const signUpResponse = await apiClient.post('/register-v2', registrationData);
         const loginResponse = await apiClient.post('/login', {email: registrationData.email, password: registrationData.password});
         localStorage.setItem('token', loginResponse.data['accessToken']);
         return loginResponse.data;
@@ -81,8 +81,9 @@ export const loginUser = async (loginData) => {
 
 export const getUserProfile = async () => {
     try {
-        const response = await apiClient.get('/profile');
-        return response.data;
+        const response = await apiClient.get('/getUserDetails');
+        console.log(response);
+        return response;
     } catch (error) {
         console.error('Error fetching user profile:', error);
         throw error;
