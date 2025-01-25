@@ -123,35 +123,15 @@ export const insertFile = async (fileData, fileName, fileGroup) => {
     }
 }
 
-export const createGroup = async (groupName) => {
+export const createGroup = async (groupinfo) => {
+    console.log(groupinfo);
     try {
-        const response = await apiClient.post('/create-group', {groupName: groupName});
+        const response = await apiClient.post('/create-group', {'groupName': groupinfo}, {
+
+        });
         return response.data;
     } catch (error) {
         console.error('Error creating group:', error);
-        throw error;
-    }
-}
-export const deleteGroup = async (groupName) => {
-    try {
-        const response = await apiClient.delete('/delete-group', {groupName: groupName});
-        return response.data;
-    } catch (error) {
-        console.error('Error deleting group:', error);
-        throw error;
-    }
-}
-export const renameGroups = async () => {
-    try {
-        const response = await apiClient.put('/rename-groups', 
-            {
-                oldGroupName: groupName,
-                newGroupName: newGroupName
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Error renaming groups:', error);
         throw error;
     }
 }

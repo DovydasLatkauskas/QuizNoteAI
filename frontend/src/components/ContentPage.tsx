@@ -16,6 +16,7 @@ import { useForm, Controller } from "react-hook-form"
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { insertFile, createGroup } from "../../api/backend";
 import {
   Form,
   FormControl,
@@ -93,6 +94,20 @@ export function SelectGroupMenu({ control } : { control: any }) {
 
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState<string>("");
+
+  const handleCreateGroup = async () => {
+    console.log("Creating group: ", groupName);
+    const data = ({'groupName': groupName});
+    try {
+      const response = await createGroup(data);
+      console.log("Group created successfully", response);    
+    }  
+    catch (error) {
+      console.error('Failed to create group:', error);
+      alert('Failed to create group');
+    }
+  }
   const [activeTab, setActiveTab] = useState<string>("All"); 
   const [contentModalOpen, setContentModalOpen] = useState<boolean>(true);
 
@@ -155,19 +170,26 @@ export default function ContentPage(){
       },
     });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const formData = new FormData();
-    formData.append("file", values.file); // `values.file` now contains the actual `File` object
-    console.log("File: ", formData.get("file"));
-
-    const file = formData.get("file") as File | null;
-    if (file) {
-      console.log("File Name: ", file.name);
+    function onSubmit(values: z.infer<typeof formSchema>) {
+      const formData = new FormData();
+      formData.append("file", values.file); // `values.file` now contains the actual `File` object
+      console.log("File: ", formData.get("file"));
+      
+      const file = formData.get("file") as File | null;
+      if (file) {
+        console.log("File Name: ", file.name);
+      
+      console.log("File Group: ", values.selectGroup);
+      // Perform your API call with `formData`
+        insertFile(formData, file.name, values.selectGroup)
+          .then((response) => {
+            console.log("File uploaded successfully", response);
+          })
+          .catch((error) => {
+            console.error("Failed to upload file", error);
+          });
+      }    
     }
-    console.log("File Group: ", values.selectGroup);
-    // Perform your API call with `formData`
-
-  }
 
   return (
     <Form {...form}>
@@ -338,6 +360,40 @@ const Content: React.FC<ContentProps> = ({ index, filePath, content, type, check
 
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 
       bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full overflow-y-auto">
+        <h2 className="text-2xl font-semibold dark:text-white">Content</h2>
+        {/* <Button onClick={() => {}} className="w-24">Add Content</Button> */}
+        <div className="grid w-full max-w-sm items-center gap-1.5">
+          <InputContentForm />
+        </div>
+        
+        <h3 className="text-2xl mt-12">Files</h3>
+        <div>
+          <input
+            type="text"
+            placeholder="Enter Group Name"
+            onChange={(e) => setGroupName(e.target.value)}
+            value={groupName}
+          />
+          <Button onClick={handleCreateGroup}>Create Group</Button>
+        </div>
+        <div className="flex flex-row gap-4 w-full flex-wrap">
+          {groups.map((group, index) => (
+            <div key={index}>
+              <h3 className="text-xl">{group.title}</h3>
+              {group.files.map((file, index) => (
+                <Content
+                  content={file.content}
+                  key={index}
+                  index={index}
+                  filePath={file.filepath}
+                  type={file.type}
+                  checked={checkedItems.includes(file.filepath)}
+                  onChange={handleCheckboxChange(file.filepath)}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
         <h2 className="text-3xl font-semibold dark:text-white">Content</h2>
         { contentModalOpen ? 
           <UploadContentDialog contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
