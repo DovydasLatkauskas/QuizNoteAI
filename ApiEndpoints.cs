@@ -43,10 +43,30 @@ public static class ApiEndpoints {
     }
 
     private static async Task<Transcript> GetTranscription(string tempServerFilePath) {
+        var client = new AssemblyAIClient($"{Environment.GetEnvironmentVariable("ASSEMBLY_API_KEY")}");
         var fi = new FileInfo(tempServerFilePath);
         // call transcript api
 
-        throw new NotImplementedException();
+        var transcript = await client.Transcripts.TranscribeAsync(
+            new FileInfo($"{fi}"),
+            new TranscriptOptionalParams
+            {
+                SpeakerLabels = true
+            }
+        );
+        
+        if (transcript.Status == TranscriptStatus.Error)
+        {
+            Console.WriteLine($"Transcription failed {transcript.Error}");
+            Environment.Exit(1);
+        }
+        
+        return transcript;
+
+        // foreach (var utterance in transcript.Utterances!)
+        // {
+        //     Console.WriteLine($"Speaker {utterance.Speaker}: {utterance.Text}");
+        // }
     }
 
     public static void ContentEndpoints(this WebApplication app) {
