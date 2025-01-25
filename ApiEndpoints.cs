@@ -12,153 +12,15 @@ using WebApiTemplate.Services;
 namespace WebApiTemplate;
 
 public static class ApiEndpoints {
-    private static readonly EmailAddressAttribute _emailAddressAttribute = new();
-
-    private static ValidationProblem CreateValidationProblem(IdentityResult result)
-    {
-        // We expect a single error code and description in the normal case.
-        // This could be golfed with GroupBy and ToDictionary, but perf! :P
-        Debug.Assert(!result.Succeeded);
-        var errorDictionary = new Dictionary<string, string[]>(1);
-
-        foreach (var error in result.Errors)
-        {
-            string[] newDescriptions;
-
-            if (errorDictionary.TryGetValue(error.Code, out var descriptions))
-            {
-                newDescriptions = new string[descriptions.Length + 1];
-                Array.Copy(descriptions, newDescriptions, descriptions.Length);
-                newDescriptions[descriptions.Length] = error.Description;
-            }
-            else
-            {
-                newDescriptions = new string[] {error.Description};
-            }
-
-            errorDictionary[error.Code] = newDescriptions;
-        }
-
-        return TypedResults.ValidationProblem(errorDictionary);
-    }
-
-    private static async Task<Transcript> GetTranscription(string tempServerFilePath) {
-        var client = new AssemblyAIClient($"{Environment.GetEnvironmentVariable("ASSEMBLY_API_KEY")}");
-        var fi = new FileInfo(tempServerFilePath);
-        // call transcript api
-
-        var transcript = await client.Transcripts.TranscribeAsync(
-            new FileInfo($"{fi}"),
-            new TranscriptOptionalParams
-            {
-                SpeakerLabels = true
-            }
-        );
-        
-        if (transcript.Status == TranscriptStatus.Error)
-        {
-            Console.WriteLine($"Transcription failed {transcript.Error}");
-            Environment.Exit(1);
-        }
-        
-        return transcript;
-
-        // foreach (var utterance in transcript.Utterances!)
-        // {
-        //     Console.WriteLine($"Speaker {utterance.Speaker}: {utterance.Text}");
-        // }
-    }
-
-    private static void ContentEndpoints(this WebApplication app) {
-        app.MapPost("/insert-file", [IgnoreAntiforgeryToken] async (
-            string fileName, string groupName, string? subGroupName, IFormFile file,
-            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
-        {
-            var user = await userManager.GetUserAsync(httpContext.User);
-            if (user is null) {
-                return Results.Unauthorized();
-            }
-
-            if(!contentService.CheckGroupExists(groupName, user.Id)) {
-                return Results.NotFound("group not found by name");
-            }
-
-            if (subGroupName == "") {
-                subGroupName = null;
-            }
-
-            // save file to temp storage
-            string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
-            await using (var stream = File.Create(tempPath))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // get transcription
-            var ct = file.ContentType;
-            var text = "";
-            if (ct.StartsWith("audio/") || ct.StartsWith("video/")) {
-                var transcript = await GetTranscription(tempPath);
-                text = transcript.Text ?? "";
-            }
-            else if (ct == "text/plain") {
-                using var reader = new StreamReader(file.OpenReadStream());
-                text = await reader.ReadToEndAsync();
-            }
-            else {
-                return Results.BadRequest("Not implemented: other filetype support.");
-            }
-
-            File.Delete(tempPath);
-
-            // save transcription to group
-            var contentFile = new ContentFile {
-                Id = Guid.NewGuid(),
-                Name = fileName,
-                UploadedAtUtc = DateTime.UtcNow,
-                Text = text
-            };
-
-            var scfResp = await contentService.SaveContentFile(contentFile, groupName, subGroupName, user.Id);
-            if (!scfResp) {
-                return Results.NotFound("group not found by name");
-            }
-
-            return Results.Ok();
-        }).DisableAntiforgery();
-
-        app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
-            IContentService contentService) => {
-            var user = await userManager.GetUserAsync(httpContext.User);
-            if (user is null) {
-                return Results.Unauthorized();
-            }
-
-            var groupTree = await contentService.GetUserGroupTree(user.Id);
-            return Results.Json(groupTree);
-        });
-    }
-
-    private static void TestEndpoints(this WebApplication app) {
-        app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
-            IUserService userService) => {
-
-            var user = await userManager.GetUserAsync(httpContext.User);
-            if (user is null) {
-                return Results.Unauthorized();
-            }
-
-            var userDetails = await userService.GetUserDetails(user.Id);
-            if (userDetails is null) {
-                return Results.Unauthorized();
-            }
-            return Results.Json(userDetails);
-        });
-
-        app.MapGet("/createTestUser", async (IUserService userService) => {
-            var user = await userService.CreateTestUser();
-            return Results.Text($"created user with name: {user.FirstName} {user.LastName}");
-        });
+    private static void QuizEndpoints(this WebApplication app) {
+        // app.MapGet("/user-quizzes", async (IContentService contentService, HttpContext httpContext, UserManager<User> userManager) => {
+        //         var user = await userManager.GetUserAsync(httpContext.User);
+        //         if (user is null) {
+        //             return Results.Unauthorized();
+        //         }
+        //
+        //         var quizesResponse = contentService.GetUserQuizzesDto();
+        // });
 
         app.MapGet("/GeminiQuiz", async (ILLMService llmService) => {
             string userPrompt = "";
@@ -261,10 +123,120 @@ public static class ApiEndpoints {
         });
     }
 
+    private static void ContentEndpoints(this WebApplication app) {
+        app.MapPost("/create-group", async (string groupName,
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
+        {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            bool rsp = await contentService.CreateGroup(user.Id, groupName);
+            if (!rsp) {
+                return Results.Conflict("group already exists");
+            }
+
+            return Results.Ok();
+        });
+
+        app.MapPost("/insert-file", [IgnoreAntiforgeryToken] async (
+            string fileName, string groupName, string? subGroupName, IFormFile file,
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
+        {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            if(!contentService.CheckGroupExists(groupName, user.Id)) {
+                return Results.NotFound("group not found by name");
+            }
+
+            if (subGroupName == "") {
+                subGroupName = null;
+            }
+
+            // save file to temp storage
+            string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
+            await using (var stream = File.Create(tempPath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // get transcription
+            var ct = file.ContentType;
+            var text = "";
+            if (ct.StartsWith("audio/") || ct.StartsWith("video/")) {
+                var transcript = await GetTranscription(tempPath);
+                text = transcript.Text ?? "";
+            }
+            else if (ct == "text/plain") {
+                using var reader = new StreamReader(file.OpenReadStream());
+                text = await reader.ReadToEndAsync();
+            }
+            else {
+                return Results.BadRequest("Not implemented: other filetype support.");
+            }
+
+            File.Delete(tempPath);
+
+            // save transcription to group
+            var contentFile = new ContentFile {
+                Id = Guid.NewGuid(),
+                Name = fileName,
+                UploadedAtUtc = DateTime.UtcNow,
+                Text = text
+            };
+
+            var scfResp = await contentService.SaveContentFile(contentFile, groupName, subGroupName, user.Id);
+            if (!scfResp) {
+                return Results.NotFound("group not found by name");
+            }
+
+            return Results.Ok();
+        }).DisableAntiforgery();
+
+        app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
+            IContentService contentService) => {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            var groupTree = await contentService.GetUserGroupTree(user.Id);
+            return Results.Json(groupTree);
+        });
+    }
+
+    private static void TestEndpoints(this WebApplication app) {
+        app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
+            IUserService userService) => {
+
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            var userDetails = await userService.GetUserDetails(user.Id);
+            if (userDetails is null) {
+                return Results.Unauthorized();
+            }
+            return Results.Json(userDetails);
+        });
+
+        app.MapGet("/createTestUser", async (IUserService userService) => {
+            var user = await userService.CreateTestUser();
+            return Results.Text($"created user with name: {user.FirstName} {user.LastName}");
+        });
+    }
+
     public static void AddApiEndpoints(this WebApplication app) {
         app.ContentEndpoints();
 
         app.TestEndpoints();
+
+        app.QuizEndpoints();
 
         app.MapPost("/register-v2", async Task<Results<Ok, ValidationProblem>>
             ([FromBody] RegisterRequestDto registration, HttpContext context, [FromServices] IServiceProvider sp) =>
@@ -300,6 +272,63 @@ public static class ApiEndpoints {
             //await SendConfirmationEmailAsync(user, userManager, context, email);
             return TypedResults.Ok();
         });
+    }
+
+        private static readonly EmailAddressAttribute _emailAddressAttribute = new();
+
+    private static ValidationProblem CreateValidationProblem(IdentityResult result)
+    {
+        // We expect a single error code and description in the normal case.
+        // This could be golfed with GroupBy and ToDictionary, but perf! :P
+        Debug.Assert(!result.Succeeded);
+        var errorDictionary = new Dictionary<string, string[]>(1);
+
+        foreach (var error in result.Errors)
+        {
+            string[] newDescriptions;
+
+            if (errorDictionary.TryGetValue(error.Code, out var descriptions))
+            {
+                newDescriptions = new string[descriptions.Length + 1];
+                Array.Copy(descriptions, newDescriptions, descriptions.Length);
+                newDescriptions[descriptions.Length] = error.Description;
+            }
+            else
+            {
+                newDescriptions = new string[] {error.Description};
+            }
+
+            errorDictionary[error.Code] = newDescriptions;
+        }
+
+        return TypedResults.ValidationProblem(errorDictionary);
+    }
+
+    private static async Task<Transcript> GetTranscription(string tempServerFilePath) {
+        var client = new AssemblyAIClient($"{Environment.GetEnvironmentVariable("ASSEMBLY_API_KEY")}");
+        var fi = new FileInfo(tempServerFilePath);
+        // call transcript api
+
+        var transcript = await client.Transcripts.TranscribeAsync(
+            new FileInfo($"{fi}"),
+            new TranscriptOptionalParams
+            {
+                SpeakerLabels = true
+            }
+        );
+
+        if (transcript.Status == TranscriptStatus.Error)
+        {
+            Console.WriteLine($"Transcription failed {transcript.Error}");
+            Environment.Exit(1);
+        }
+
+        return transcript;
+
+        // foreach (var utterance in transcript.Utterances!)
+        // {
+        //     Console.WriteLine($"Speaker {utterance.Speaker}: {utterance.Text}");
+        // }
     }
 }
 

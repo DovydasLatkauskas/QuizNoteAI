@@ -80,15 +80,46 @@ public class ContentService : IContentService {
 
         return outp;
     }
+
+    public async Task<bool> CreateGroup(string userId, string groupName) {
+        var usr = await _context.Users
+            .Include(u=> u.Groups).FirstAsync(u=> u.Id == userId);
+        if (usr.Groups.Any(g=> g.Name == groupName)) {
+            return false;
+        }
+
+        usr.Groups.Add(new Group {
+            Name = groupName
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
+    //     var usr = await _context.Users
+    //         .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
+    //         .ThenInclude(q => q.Sources)
+    //         .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
+    //         .ThenInclude(q => q.Questions).ThenInclude(q => q.Answers)
+    //         .FirstAsync(u=> u.Id == userId);
+    //     var quizzes = usr.Groups
+    //         .Select(g=> new UserQuizzesDto(g.Name, g.Quizzes));
+    //     return quizzes;
+    // }
 }
 
 public interface IContentService {
     public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId);
     public bool CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(string userId);
+    Task<bool> CreateGroup(string userId, string groupName);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
 public record GroupTreeDto(string groupName, List<SubGroupDto> subGroups, List<ContentFilePropsDto> contentFileProperties);
 public record SubGroupDto(List<ContentFilePropsDto> contentFileProperties);
 public record ContentFilePropsDto(string name, DateTime uploadedAt);
+
+public record UserQuizzesDto(List<GroupQuizzesDto> GroupQuizzesDtos);
+public record GroupQuizzesDto(string group, List<Quiz> quizzes);
