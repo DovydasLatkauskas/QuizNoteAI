@@ -160,9 +160,9 @@ public static class ApiEndpoints {
             return Results.Text($"created user with name: {user.FirstName} {user.LastName}");
         });
 
-        app.MapGet("/GeminiQuiz", async () => {
+        app.MapGet("/GeminiQuiz", async (ILLMService llmService) => {
             string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
-            
+
 
             string userPrompt = "";
 
@@ -231,39 +231,13 @@ public static class ApiEndpoints {
             {
                 combinedPrompt += $"{i + 1}. {fileContent[i]}";
             }
-            var requestBody = new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = combinedPrompt}
-                        }
-                    }
-                }
-            };
 
-            string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
-
-            using var httpClient = new HttpClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = new StringContent(jsonBody, Encoding.UTF8,  "application/json")
-            };
-
-            HttpResponseMessage response = await httpClient.SendAsync(request);
-
-            string responseBody = await response.Content.ReadAsStringAsync();
+            var responseBody = await llmService.PromptGemini(combinedPrompt);
 
             return Results.Text(responseBody);
         });
         
-        app.MapGet("/GeminiSummarize", async () => {
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
-            
+        app.MapGet("/GeminiSummarize", async (ILLMService llmService) => {
             string combinedPrompt = $@"Please summarize the information provided. Focus on the key points, important concepts, and any notable details which might be necessary to study the material. Keep the summary concise, clear, and to the point. Provide the answer .\n\n +
                                     Please summarize the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
@@ -281,32 +255,8 @@ public static class ApiEndpoints {
                 combinedPrompt += $"{i + 1}. {fileContent[i]}";
             }
             Console.WriteLine(combinedPrompt);
-            var requestBody = new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = combinedPrompt}
-                        }
-                    }
-                }
-            };
 
-            string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
-
-            using var httpClient = new HttpClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = new StringContent(jsonBody, Encoding.UTF8,  "application/json")
-            };
-
-            HttpResponseMessage response = await httpClient.SendAsync(request);
-
-            string responseBody = await response.Content.ReadAsStringAsync();
+            var responseBody = await llmService.PromptGemini(combinedPrompt);
 
             return Results.Text(responseBody);
         });
