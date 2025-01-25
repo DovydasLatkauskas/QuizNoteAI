@@ -96,6 +96,23 @@ public class ContentService : IContentService {
         return true;
     }
 
+    public async Task DeleteGroup(string userId, string groupName)
+    {
+        var usr = await _context.Users
+            .Include(u => u.Groups)
+            .FirstAsync(u => u.Id == userId);
+
+        var group = usr.Groups.FirstOrDefault(g => g.Name == groupName);
+        if (group == null) {
+            return;
+        }
+
+        usr.Groups.Remove(group);
+
+        await _context.SaveChangesAsync();
+    }
+
+
     // public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
     //     var usr = await _context.Users
     //         .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
@@ -114,6 +131,7 @@ public interface IContentService {
     public bool CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(string userId);
     Task<bool> CreateGroup(string userId, string groupName);
+    Task DeleteGroup(string userId, string groupName);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
