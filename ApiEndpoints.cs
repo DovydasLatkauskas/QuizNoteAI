@@ -49,7 +49,7 @@ public static class ApiEndpoints {
         throw new NotImplementedException();
     }
 
-    public static void ContentEndpoints(this WebApplication app) {
+    private static void ContentEndpoints(this WebApplication app) {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
             string file_name, string file_path, string file_type, IFormFile file,
@@ -77,7 +77,6 @@ public static class ApiEndpoints {
             var transcript = await GetTranscription(tempPath);
 
             // save transcription to group
-
             var contentFile = new ContentFile {
                 Id = Guid.NewGuid(),
                 Name = file_name,
@@ -95,10 +94,18 @@ public static class ApiEndpoints {
             return Results.Ok();
         });
 
-        app.MapGet("/sh");
+        // app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
+        //     IContentService contentService) => {
+        //     var user = await userManager.GetUserAsync(httpContext.User);
+        //     if (user is null) {
+        //         return Results.Unauthorized();
+        //     }
+        //
+        //     string groupTree = await contentService.GetUserGroupTree(user);
+        // });
     }
 
-    public static void TestEndpoints(this WebApplication app) {
+    private static void TestEndpoints(this WebApplication app) {
         app.MapGet("/", () => {
             return "hello world!";
         });
