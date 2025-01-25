@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text;
+using AssemblyAI;
+using AssemblyAI.Transcripts;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using WebApiTemplate.Models;
 using WebApiTemplate.Services;
@@ -41,32 +42,56 @@ public static class ApiEndpoints {
         return TypedResults.ValidationProblem(errorDictionary);
     }
 
-    private static void GetTranscription(string tempServerFilePath) {
+    private static async Task<Transcript> GetTranscription(string tempServerFilePath) {
         var fi = new FileInfo(tempServerFilePath);
         // call transcript api
-
 
         throw new NotImplementedException();
     }
 
     public static void ContentEndpoints(this WebApplication app) {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
-        app.MapPost("/insert-file", (string file_name, string file_path, string file_type) => {
-            string group = file_path.Split("/").First();
+        app.MapPost("/insert-file", async (
+            string file_name, string file_path, string file_type, IFormFile file,
+            IContentService contentService) =>
+        {
+            string groupName = file_path.Split("/").First();
             int index = file_path.IndexOf("/");
+            string subPath = "";
             if (index > 0) {
-                string subPath = file_path.Substring(index + 1);
+                subPath = file_path.Substring(index + 1);
+            }
+
+            if(! await contentService.CheckGroupExists(groupName)) {
+                return Results.NotFound("group not found by name");
             }
 
             // save file to temp storage
+            string tempPath = Path.GetTempPath();
+            using (var stream = File.Create(tempPath))
+            {
+                await file.CopyToAsync(stream);
+            }
 
             // get transcription
-
-            string tempServerFilePath = "";
-            
-            GetTranscription(tempServerFilePath);
+            var transcript = await GetTranscription(tempPath);
 
             // save transcription to group
+
+            var contentFile = new ContentFile {
+                Name = file_name,
+                SubgroupPath = subPath,
+                UploadedAtUtc = DateTime.UtcNow,
+                Text = transcript.Text ?? "",
+                Summary = null
+            };
+
+            var scfResp = await contentService.SaveContentFile(contentFile, groupName);
+            if (!scfResp) {
+                return Results.NotFound("group not found by name");
+            }
+
+            return Results.Ok();
         });
     }
 
