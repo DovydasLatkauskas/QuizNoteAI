@@ -82,8 +82,8 @@ export const loginUser = async (loginData) => {
 export const getUserProfile = async () => {
     try {
         const response = await apiClient.get('/getUserDetails');
-        //console.log(response);
-        return response.data;
+        console.log(response);
+        return response;
     } catch (error) {
         console.error('Error fetching user profile:', error);
         throw error;
