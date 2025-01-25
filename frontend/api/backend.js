@@ -49,7 +49,8 @@ export const loginUser = async (loginData) => {
     try {
         console.log('loginData:', loginData);
         const response = await apiClient.post('/login', loginData);
-        localStorage.setItem('token', response.data.token);
+        console.log('response:', response);
+        localStorage.setItem('token', response.data['accessToken']);
         return response.data;
     } catch (error) {
         console.error('Error logging in user:', error);
@@ -60,6 +61,7 @@ export const loginUser = async (loginData) => {
 export const getUserProfile = async () => {
     try {
         const response = await apiClient.get('/profile');
+        console.log('response:', response);
         return response.data;
     } catch (error) {
         console.error('Error fetching user profile:', error);

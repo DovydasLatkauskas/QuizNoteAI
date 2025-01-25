@@ -22,8 +22,7 @@ export default function LogIn() {
 
     try {
       const data = loginUser({'email': email, 'password': password});
-
-      router.push("/Dashboard");
+      await router.push("/Dashboard");
     } catch (error) {
       console.error('Authentication failed:', error);
       alert('Invalid email or password');
