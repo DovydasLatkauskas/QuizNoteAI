@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text;
+using AssemblyAI;
+using AssemblyAI.Transcripts;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using WebApiTemplate.Models;
 using WebApiTemplate.Services;
@@ -41,7 +42,90 @@ public static class ApiEndpoints {
         return TypedResults.ValidationProblem(errorDictionary);
     }
 
-    public static void AddApiEndpoints(this WebApplication app) {
+    private static async Task<Transcript> GetTranscription(string tempServerFilePath) {
+        var client = new AssemblyAIClient($"{Environment.GetEnvironmentVariable("ASSEMBLY_API_KEY")}");
+        var fi = new FileInfo(tempServerFilePath);
+        // call transcript api
+
+        var transcript = await client.Transcripts.TranscribeAsync(
+            new FileInfo($"{fi}"),
+            new TranscriptOptionalParams
+            {
+                SpeakerLabels = true
+            }
+        );
+        
+        if (transcript.Status == TranscriptStatus.Error)
+        {
+            Console.WriteLine($"Transcription failed {transcript.Error}");
+            Environment.Exit(1);
+        }
+        
+        return transcript;
+
+        // foreach (var utterance in transcript.Utterances!)
+        // {
+        //     Console.WriteLine($"Speaker {utterance.Speaker}: {utterance.Text}");
+        // }
+    }
+
+    private static void ContentEndpoints(this WebApplication app) {
+        // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
+        app.MapPost("/insert-file", async (
+            string file_name, string file_path, string file_type, IFormFile file,
+            IContentService contentService) =>
+        {
+            string groupName = file_path.Split("/").First();
+            int index = file_path.IndexOf("/");
+            string subPath = "";
+            if (index > 0) {
+                subPath = file_path.Substring(index + 1);
+            }
+
+            if(! await contentService.CheckGroupExists(groupName)) {
+                return Results.NotFound("group not found by name");
+            }
+
+            // save file to temp storage
+            string tempPath = Path.GetTempPath();
+            using (var stream = File.Create(tempPath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // get transcription
+            var transcript = await GetTranscription(tempPath);
+
+            // save transcription to group
+            var contentFile = new ContentFile {
+                Id = Guid.NewGuid(),
+                Name = file_name,
+                SubgroupPath = subPath,
+                UploadedAtUtc = DateTime.UtcNow,
+                Text = transcript.Text ?? "",
+                Summary = null
+            };
+
+            var scfResp = await contentService.SaveContentFile(contentFile, groupName);
+            if (!scfResp) {
+                return Results.NotFound("group not found by name");
+            }
+
+            return Results.Ok();
+        });
+
+        // app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
+        //     IContentService contentService) => {
+        //     var user = await userManager.GetUserAsync(httpContext.User);
+        //     if (user is null) {
+        //         return Results.Unauthorized();
+        //     }
+        //
+        //     string groupTree = await contentService.GetUserGroupTree(user);
+        // });
+    }
+
+    private static void TestEndpoints(this WebApplication app) {
         app.MapGet("/", () => {
             return "hello world!";
         });
@@ -83,6 +167,12 @@ public static class ApiEndpoints {
 
             return Results.Text(responseBody);
         });
+    }
+
+    public static void AddApiEndpoints(this WebApplication app) {
+        app.ContentEndpoints();
+
+        app.TestEndpoints();
 
         app.MapPost("/register-v2", async Task<Results<Ok, ValidationProblem>>
             ([FromBody] RegisterRequestDto registration, HttpContext context, [FromServices] IServiceProvider sp) =>
