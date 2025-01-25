@@ -1,12 +1,14 @@
 namespace WebApiTemplate.Models; 
 
 public class Group {
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public List<string> Subgroups { get; set; }
-    public List<ContentFile> DataFiles { get; set; }
+    public List<ContentFile> ContentFiles { get; set; }
 }
 
 public class ContentFile {
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public string Text { get; set; }
     public string? Summary { get; set; }

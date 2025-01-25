@@ -24,7 +24,7 @@ public class ContentService : IContentService {
             return false;
         }
 
-        grp.DataFiles.Add(contentFile);
+        grp.ContentFiles.Add(contentFile);
         if (!grp.Subgroups.Contains(contentFile.SubgroupPath)) {
             grp.Subgroups.Add(contentFile.SubgroupPath);
         }

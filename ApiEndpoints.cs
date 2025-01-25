@@ -79,6 +79,7 @@ public static class ApiEndpoints {
             // save transcription to group
 
             var contentFile = new ContentFile {
+                Id = Guid.NewGuid(),
                 Name = file_name,
                 SubgroupPath = subPath,
                 UploadedAtUtc = DateTime.UtcNow,
