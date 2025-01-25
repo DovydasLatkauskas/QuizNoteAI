@@ -1,7 +1,6 @@
 namespace WebApiTemplate.Models; 
 
 public class Group {
-    public Guid OwnerId { get; init; }
     public Guid Id { get; init; } = Guid.NewGuid();
     public string Name { get; set; }
     public List<Subgroup> Subgroups { get; set; }

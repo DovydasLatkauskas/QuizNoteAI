@@ -11,16 +11,17 @@ public class ContentService : IContentService {
         _context = context;
     }
 
-    public async Task<bool> CheckGroupExists(string groupName, string userId) {
-        var grp = await _context.Groups.Where(g => g.OwnerId == Guid.Parse(userId))
-            .FirstOrDefaultAsync(g => g.Name == groupName);
+    public bool CheckGroupExists(string groupName, string userId) {
+        var grp = _context.Users.Include(u=> u.Groups)
+            .First(u=> u.Id == userId)
+            .Groups.FirstOrDefault(g => g.Name == groupName);
 
         return grp is not null;
     }
 
-    public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string subGroupName, string userId) {
-        var usr = await _context.Users.Include(u=> u.Groups)
-            .ThenInclude(g => g.Subgroups)
+    public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId) {
+        var usr = await _context.Users.Include(u=> u.Groups).ThenInclude(g=> g.ContentFiles)
+            .Include(u=> u.Groups).ThenInclude(g => g.Subgroups).ThenInclude(s=>s.ContentFiles)
             .FirstOrDefaultAsync(u => u.Id == userId);
         if (usr is null) {
             return false;
@@ -31,7 +32,7 @@ public class ContentService : IContentService {
             return false;
         }
 
-        if (subGroupName == "") {
+        if (subGroupName is null) {
             grp.ContentFiles.Add(contentFile);
         }
         else {
@@ -50,10 +51,13 @@ public class ContentService : IContentService {
         return true;
     }
 
-    public async Task<UserTreeDto> GetUserGroupTree(User user) {
-        var grps = await _context.Groups
-            .Include(g => g.Subgroups).Include(g => g.ContentFiles)
-            .Where(g => g.OwnerId == Guid.Parse(user.Id)).ToListAsync();
+    public async Task<UserTreeDto> GetUserGroupTree(string userId) {
+        var grps = (await _context.Users
+            .Include(u => u.Groups)
+            .ThenInclude(g => g.Subgroups)
+            .ThenInclude(sg => sg.ContentFiles).Include(u => u.Groups)
+            .ThenInclude(g => g.ContentFiles)
+            .FirstAsync(u => u.Id == userId)).Groups;
 
         var outp = new UserTreeDto(new List<GroupTreeDto>());
         foreach (var grp in grps) {
@@ -79,9 +83,9 @@ public class ContentService : IContentService {
 }
 
 public interface IContentService {
-    public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string subGroupName, string userId);
-    public Task<bool> CheckGroupExists(string groupName, string userId);
-    Task<UserTreeDto> GetUserGroupTree(User user);
+    public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId);
+    public bool CheckGroupExists(string groupName, string userId);
+    Task<UserTreeDto> GetUserGroupTree(string userId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);

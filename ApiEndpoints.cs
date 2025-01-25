@@ -72,7 +72,7 @@ public static class ApiEndpoints {
     private static void ContentEndpoints(this WebApplication app) {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
-            string file_name, string groupName, string? subGroupName, IFormFile file,
+            string fileName, string groupName, string? subGroupName, IFormFile file,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
             var user = await userManager.GetUserAsync(httpContext.User);
@@ -80,7 +80,7 @@ public static class ApiEndpoints {
                 return Results.Unauthorized();
             }
 
-            if(! await contentService.CheckGroupExists(groupName, user.Id)) {
+            if(!contentService.CheckGroupExists(groupName, user.Id)) {
                 return Results.NotFound("group not found by name");
             }
 
@@ -102,7 +102,7 @@ public static class ApiEndpoints {
             // save transcription to group
             var contentFile = new ContentFile {
                 Id = Guid.NewGuid(),
-                Name = file_name,
+                Name = fileName,
                 UploadedAtUtc = DateTime.UtcNow,
                 Text = transcript.Text ?? ""
             };
@@ -122,7 +122,7 @@ public static class ApiEndpoints {
                 return Results.Unauthorized();
             }
 
-            var groupTree = await contentService.GetUserGroupTree(user);
+            var groupTree = await contentService.GetUserGroupTree(user.Id);
             return Results.Json(groupTree);
         });
     }
