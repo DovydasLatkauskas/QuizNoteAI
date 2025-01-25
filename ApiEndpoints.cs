@@ -70,7 +70,7 @@ public static class ApiEndpoints {
     }
 
     private static void ContentEndpoints(this WebApplication app) {
-        app.MapPost("/insert-file", async (
+        app.MapPost("/insert-file", [IgnoreAntiforgeryToken] async (
             string fileName, string groupName, string? subGroupName, IFormFile file,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
@@ -125,7 +125,7 @@ public static class ApiEndpoints {
             }
 
             return Results.Ok();
-        });
+        }).DisableAntiforgery();
 
         app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
             IContentService contentService) => {
