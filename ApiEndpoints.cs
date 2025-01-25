@@ -136,10 +136,6 @@ public static class ApiEndpoints {
     }
 
     private static void TestEndpoints(this WebApplication app) {
-        app.MapGet("/", () => {
-            return "hello world!";
-        });
-
         app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
             IUserService userService) => {
 
