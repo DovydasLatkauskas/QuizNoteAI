@@ -140,17 +140,18 @@ public class ContentService : IContentService {
 
 
 
-    // public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
-    //     var usr = await _context.Users
-    //         .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
-    //         .ThenInclude(q => q.Sources)
-    //         .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
-    //         .ThenInclude(q => q.Questions).ThenInclude(q => q.Answers)
-    //         .FirstAsync(u=> u.Id == userId);
-    //     var quizzes = usr.Groups
-    //         .Select(g=> new UserQuizzesDto(g.Name, g.Quizzes));
-    //     return quizzes;
-    // }
+    public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
+        var usr = await _context.Users
+            .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
+            .ThenInclude(q => q.Sources)
+            .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
+            .ThenInclude(q => q.Questions).ThenInclude(q => q.Answers)
+            .FirstAsync(u=> u.Id == userId);
+        var quizzes = usr.Groups
+            .Select(g=> new GroupQuizzesDto(g.Name, g.Quizzes));
+
+        return new UserQuizzesDto(quizzes.ToList());
+    }
 }
 
 public interface IContentService {
@@ -160,6 +161,7 @@ public interface IContentService {
     Task<bool> CreateGroup(string userId, string groupName);
     Task DeleteGroup(string userId, string groupName);
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
+    Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);

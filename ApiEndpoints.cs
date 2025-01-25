@@ -13,14 +13,16 @@ namespace WebApiTemplate;
 
 public static class ApiEndpoints {
     private static void QuizEndpoints(this WebApplication app) {
-        // app.MapGet("/user-quizzes", async (IContentService contentService, HttpContext httpContext, UserManager<User> userManager) => {
-        //         var user = await userManager.GetUserAsync(httpContext.User);
-        //         if (user is null) {
-        //             return Results.Unauthorized();
-        //         }
-        //
-        //         var quizesResponse = contentService.GetUserQuizzesDto();
-        // });
+        app.MapGet("/user-quizzes", async (IContentService contentService, HttpContext httpContext, UserManager<User> userManager) => {
+                var user = await userManager.GetUserAsync(httpContext.User);
+                if (user is null) {
+                    return Results.Unauthorized();
+                }
+
+                var quizzesResponse = contentService.GetUserQuizzesDto(user.Id);
+
+                return Results.Json(quizzesResponse);
+        });
 
         app.MapGet("/GeminiQuiz", async (ILLMService llmService) => {
             string userPrompt = "";
