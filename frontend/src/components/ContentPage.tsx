@@ -1,25 +1,30 @@
 import React, { useState } from "react";
 import { Button } from "./ui/button"
 import { motion, AnimatePresence } from "framer-motion";
-
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
-  let videos: any[] = [
-    { title: "Video 1" },
-    { title: "Video 2" },
-    { title: "Video 3" }
-  ]
-  let audios: any[] = [
-    { title: "Audio 1" },
-    { title: "Audio 2" },
-    { title: "Audio 3" }
-  ]
-  let documents: any[] = [
-    { title: "Document 1" },
-    { title: "Document 2" },
+  let groups = [
+    {
+      title: "CISC 454",
+      files: [
+        {filepath: "lecture_01.mp4", type: "video", content: "0:00 - There was a man named John..."},
+        {filepath: "lecture_notes_02.pdf", type: "document", content: "0:00 - There was another man named Eric"},
+        {filepath: "lecture_03.mp4", type: "video", content: "0:00 - There "},
+      ]
+    },
+    {
+      title: "CISC 454",
+      files: [
+        {filepath: "lecture_01.mp3", type: "audio", content: "0:00 - some other description example"},
+        {filepath: "lecture_02.mp4", type: "video", content: "0:00 - some other description example"},
+        {filepath: "lecture_03.mp4", type: "video", content: "0:00 - some other description example"},
+      ]
+    },
   ]
 
   // Content component with a checkbox
@@ -73,44 +78,26 @@ export default function ContentPage(){
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 
       bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full overflow-y-auto">
         <h2 className="text-2xl font-semibold dark:text-white">Content</h2>
-        <Button onClick={() => {}} className="w-24">Add Content</Button>
+        {/* <Button onClick={() => {}} className="w-24">Add Content</Button> */}
+        <div className="grid w-full max-w-sm items-center gap-1.5">
+          <Input id="picture" type="file" />
+        </div>
         
-        <h3 className="text-2xl mt-12">Videos</h3>
+        <h3 className="text-2xl mt-12">Files</h3>
         <div className="flex flex-row gap-4 w-full flex-wrap">
-          {videos.map((video, index) => (
-            <Content
-              key={index}
-              title={video.title}
-              type="video"
-              checked={checkedItems.includes(video.title)}
-              onChange={handleCheckboxChange(video.title)}
-            />
-          ))}
-        </div>
-
-        <h3 className="text-2xl mt-12">Audios</h3>
-        <div className="flex flex-row gap-4 w-full flex-wrap">
-          {audios.map((audio, index) => (
-            <Content
-              key={index}
-              title={audio.title}
-              type="audio"
-              checked={checkedItems.includes(audio.title)}
-              onChange={handleCheckboxChange(audio.title)}
-            />
-          ))}
-        </div>
-
-        <h3 className="text-2xl mt-12">Documents</h3>
-        <div className="flex flex-row gap-4 w-full flex-wrap">
-          {documents.map((document, index) => (
-            <Content
-              key={index}
-              title={document.title}
-              type="document"
-              checked={checkedItems.includes(document.title)}
-              onChange={handleCheckboxChange(document.title)}
-            />
+          {groups.map((group, index) => (
+            <div>
+              <h3 className="text-xl">{group.title}</h3>
+              {group.files.map((file, index) => (
+                <Content
+                  key={index}
+                  title={file.filepath}
+                  type={file.type}
+                  checked={checkedItems.includes(file.filepath)}
+                  onChange={handleCheckboxChange(file.filepath)}
+                />
+              ))}
+            </div>
           ))}
         </div>
      </div>
