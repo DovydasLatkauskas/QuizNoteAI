@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { tr } from 'framer-motion/client';
 
 let token = '';
 
@@ -25,12 +26,22 @@ export const createTestUser = async () => {
     }
 };
 
-export const getGeminiJoke = async () => {
+export const getQuiz = async () => {
     try {
-        const response = await apiClient.get('/GeminiJoke');
+        const response = await axios.get('/GeminiQuiz');
         return response.data;
     } catch (error) {
-        console.error('Error fetching Gemini joke:', error);
+        console.error('Error fetching quiz:', error);
+        throw error;
+    }
+};
+
+export const getSummary = async () => {
+    try {
+        const response = await axios.get('/GeminiSummary');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching summary:', error);
         throw error;
     }
 };
@@ -67,15 +78,70 @@ export const getUserProfile = async () => {
         throw error;
     }
 }
-
-export const getQuiz = async (quizID) => {
+export const insertFile = async (fileData, fileName, fileGroup) => {
     try {
-        // const response = await apiClient.get('/quiz', {quizID: quizID});
-        // console.log('response:', response);
-        // return response.data;
-        return "WIP";
+        const response = await apiClient.post('/insert-file',{
+            fileName: fileName,
+            fileGroup: fileGroup,
+            fileSubgroup: "",
+            file: fileData,
+        },{
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
     } catch (error) {
-        console.error('Error fetching quiz:', error);
+        console.error('Error inserting file:', error);
+        throw error;
+    }
+ };
+
+ export const manageInfo = async (profileData) => {
+    try {
+        const response = await apiClient.post('/manage/info', 
+            {
+                newEmail: email,
+                newPassword: newPassword,
+                oldPassword: oldPassword
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+    }
+}
+
+export const createGroup = async (groupName) => {
+    try {
+        const response = await apiClient.post('/create-group', {groupName: groupName});
+        return response.data;
+    } catch (error) {
+        console.error('Error creating group:', error);
+        throw error;
+    }
+}
+export const deleteGroup = async (groupName) => {
+    try {
+        const response = await apiClient.delete('/delete-group', {groupName: groupName});
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        throw error;
+    }
+}
+export const renameGroups = async () => {
+    try {
+        const response = await apiClient.put('/rename-groups', 
+            {
+                oldGroupName: groupName,
+                newGroupName: newGroupName
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error renaming groups:', error);
         throw error;
     }
 }
