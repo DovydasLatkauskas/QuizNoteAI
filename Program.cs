@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using WebApiTemplate;
 using WebApiTemplate.Models;
+using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
+
+DotEnv.Load();
 
 builder.Services.AddCors(co =>
 {

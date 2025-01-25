@@ -152,6 +152,35 @@ public class ContentService : IContentService {
 
         return new UserQuizzesDto(quizzes.ToList());
     }
+
+    public async Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId) {
+        var quizDto = responseBody.quiz;
+
+        var quiz = new Quiz
+        {
+            Title = quizDto.title,
+            Questions = quizDto.questions.Select(q => new Question
+            {
+                QuestionText = q.questions,
+                Answers = q.answers,
+                CorrectAnswer = q.correctAnswer,
+                Source = q.source
+            }).ToList(),
+            Sources = quizDto.questions.Select(q => q.source).Distinct().ToList(),
+            GroupId = Guid.Parse(groupId)
+        };
+
+        try
+        {
+            _context.Quizzes.Add(quiz);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
 }
 
 public interface IContentService {
@@ -162,6 +191,7 @@ public interface IContentService {
     Task DeleteGroup(string userId, string groupName);
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
     Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
+    Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
