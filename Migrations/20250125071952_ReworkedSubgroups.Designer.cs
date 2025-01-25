@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApiTemplate;
@@ -11,9 +12,11 @@ using WebApiTemplate;
 namespace WebApiTemplate.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250125071952_ReworkedSubgroups")]
+    partial class ReworkedSubgroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,12 +202,7 @@ namespace WebApiTemplate.Migrations
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Groups");
                 });
@@ -364,13 +362,6 @@ namespace WebApiTemplate.Migrations
                         .HasForeignKey("SubgroupId");
                 });
 
-            modelBuilder.Entity("WebApiTemplate.Models.Group", b =>
-                {
-                    b.HasOne("WebApiTemplate.Models.User", null)
-                        .WithMany("Groups")
-                        .HasForeignKey("UserId");
-                });
-
             modelBuilder.Entity("WebApiTemplate.Models.Subgroup", b =>
                 {
                     b.HasOne("WebApiTemplate.Models.Group", null)
@@ -388,11 +379,6 @@ namespace WebApiTemplate.Migrations
             modelBuilder.Entity("WebApiTemplate.Models.Subgroup", b =>
                 {
                     b.Navigation("ContentFiles");
-                });
-
-            modelBuilder.Entity("WebApiTemplate.Models.User", b =>
-                {
-                    b.Navigation("Groups");
                 });
 #pragma warning restore 612, 618
         }
