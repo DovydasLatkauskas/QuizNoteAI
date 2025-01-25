@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: bookify_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d database" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otel
+
+  webapp:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DatabaseSettings__ConnectionString=Host=db;Port=5432;Username=admin;Password=admin;Database=database
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - otel
+    env_file:
+      - .env
+
+networks:
+  otel:
+
+volumes:
+  dbdata:
