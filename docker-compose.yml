@@ -27,6 +27,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DatabaseSettings__ConnectionString=Host=db;Port=5432;Username=admin;Password=admin;Database=database
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ASSEMBLY_API_KEY=${ASSEMBLY_API_KEY}
     depends_on:
       db:
         condition: service_healthy
