@@ -78,7 +78,7 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
                   duration: 0.05,
                 },
               }}
-              className="flex absolute top-2 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6"
+              className="flex absolute top-2 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6 font-sans"
               onClick={() => setActive(null)}
             >
               <CloseIcon />
@@ -104,13 +104,13 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
                   <div className="">
                     <motion.h3
                       layoutId={`title-${active.title}-${id}`}
-                      className="font-bold text-neutral-700 dark:text-neutral-200 text-base"
+                      className="font-bold text-neutral-700 dark:text-neutral-200 text-base font-sans"
                     >
                       {active.title}
                     </motion.h3>
                     <motion.p
                       layoutId={`description-${active.description}-${id}`}
-                      className="text-neutral-600 dark:text-neutral-400 text-base"
+                      className="text-neutral-600 dark:text-neutral-400 text-base font-sans"
                     >
                       {active.description}
                     </motion.p>
@@ -122,7 +122,7 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     href={active.ctaLink}
-                    className="px-4 py-3 text-sm rounded-full font-bold bg-blue-500 text-white"
+                    className="px-4 py-3 text-sm rounded-full font-bold bg-blue-500 text-white font-sans"
                   >
                     {active.ctaText}
                   </motion.a>
@@ -164,13 +164,13 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
               <div className="flex justify-center items-center flex-col">
                 <motion.h3
                   layoutId={`title-${card.title}-${id}`}
-                  className="font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
+                  className="font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base font-sans"
                 >
                   {card.title}
                 </motion.h3>
                 <motion.p
                   layoutId={`description-${card.description}-${id}`}
-                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base"
+                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base font-sans"
                 >
                   {card.description}
                 </motion.p>
