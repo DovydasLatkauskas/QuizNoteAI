@@ -23,8 +23,7 @@ public static class ApiEndpoints {
                 return Results.Json(quizzesResponse);
         });
 
-        app.MapGet("/GeminiQuiz", async (ILLMService llmService) => {
-            string userPrompt = "";
+        app.MapGet("/GeminiQuiz", async (ILLMService llmService, string userPrompt) => {
 
             string combinedPrompt = $@"Generate a 5-question multiple choice quiz based on the information provided in the attached file. Ensure the questions cover a range of key concepts, and include four answer choices for each question, with the correct answer clearly indicated. The questions should be clear and concise. Ensure that the answer choices are similar in content and structure and that it’s not immediately obvious which option is correct. Provide four plausible answer choices for each question, with only one correct answer. Label the answers a through d. Additonally, include the number coressponding to the source from where the information was taken.
                                     Please provide the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
@@ -91,6 +90,8 @@ public static class ApiEndpoints {
             {
                 combinedPrompt += $"{i + 1}. {fileContent[i]}";
             }
+
+            combinedPrompt += $"\n {userPrompt}";
 
             var responseBody = await llmService.PromptGemini(combinedPrompt);
 
