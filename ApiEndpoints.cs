@@ -72,19 +72,12 @@ public static class ApiEndpoints {
     private static void ContentEndpoints(this WebApplication app) {
         // file_path = group/nesteddir/nesteddir2/nesteddir3/etc...
         app.MapPost("/insert-file", async (
-            string file_name, string file_path, string file_type, IFormFile file,
+            string file_name, string groupName, string? subGroupName, IFormFile file,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
             var user = await userManager.GetUserAsync(httpContext.User);
             if (user is null) {
                 return Results.Unauthorized();
-            }
-
-            var spl = file_path.Split("/");
-            string groupName = spl.First();
-            string subGroupName = "";
-            if (spl.Length > 1) {
-                subGroupName = spl[1];
             }
 
             if(! await contentService.CheckGroupExists(groupName, user.Id)) {
@@ -99,9 +92,9 @@ public static class ApiEndpoints {
             }
 
             // get transcription
-            if (file_type != "mp3") {
-                throw new Exception("not implemented other filetype support");
-            }
+            // if (file_type != "mp3") {
+            //     throw new Exception("not implemented other filetype support");
+            // }
             var transcript = await GetTranscription(tempPath);
 
             File.Delete(tempPath);
