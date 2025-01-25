@@ -140,6 +140,35 @@ public static class ApiEndpoints {
             return Results.Ok();
         });
 
+        app.MapDelete("/delete-group", async (string groupName,
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
+        {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            await contentService.DeleteGroup(user.Id, groupName);
+
+            return Results.Ok();
+        });
+
+        app.MapDelete("/rename-group", async (string oldGroupName, string newGroupName,
+            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
+        {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            bool rsp = await contentService.UpdateGroupName(user.Id, oldGroupName, newGroupName);
+            if (!rsp) {
+                return Results.Conflict("could not complete operation");
+            }
+
+            return Results.Ok();
+        });
+
         app.MapPost("/insert-file", [IgnoreAntiforgeryToken] async (
             string fileName, string groupName, string? subGroupName, IFormFile file,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>

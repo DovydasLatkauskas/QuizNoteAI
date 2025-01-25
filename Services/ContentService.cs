@@ -82,19 +82,63 @@ public class ContentService : IContentService {
     }
 
     public async Task<bool> CreateGroup(string userId, string groupName) {
-        var usr = await _context.Users
-            .Include(u=> u.Groups).FirstAsync(u=> u.Id == userId);
-        if (usr.Groups.Any(g=> g.Name == groupName)) {
+        var grps = _context.Groups.Where(g => g.UserId == userId).ToList();
+        if (grps.Any(g=> g.Name == groupName)) {
             return false;
         }
 
-        usr.Groups.Add(new Group {
-            Name = groupName
+        _context.Groups.Add(new Group {
+            Name = groupName,
+            UserId = userId
         });
 
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task DeleteGroup(string userId, string groupName)
+    {
+        var usr = await _context.Users
+            .Include(u => u.Groups)
+            .FirstAsync(u => u.Id == userId);
+
+        var group = usr.Groups.FirstOrDefault(g => g.Name == groupName);
+        if (group == null) {
+            return;
+        }
+
+        usr.Groups.Remove(group);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName)
+    {
+        var usr = await _context.Users
+            .Include(u => u.Groups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (usr == null)
+        {
+            return false;
+        }
+
+        var group = usr.Groups.FirstOrDefault(g => g.Name == oldGroupName);
+        if (group == null)
+        {
+            return false;
+        }
+
+        if (usr.Groups.Any(g => g.Name == newGroupName))
+        {
+            return false;
+        }
+
+        group.Name = newGroupName;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+
 
     // public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
     //     var usr = await _context.Users
@@ -114,6 +158,8 @@ public interface IContentService {
     public bool CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(string userId);
     Task<bool> CreateGroup(string userId, string groupName);
+    Task DeleteGroup(string userId, string groupName);
+    Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
