@@ -3,6 +3,18 @@ using WebApiTemplate;
 using WebApiTemplate.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(co =>
+{
+    co.AddDefaultPolicy(pb =>
+    {
+        pb.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithExposedHeaders("X-Total-Count");
+    });
+});
+
 builder.AddServices();
 
 builder.Services.AddEndpointsApiExplorer();
