@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using WebApiTemplate.Models;
 
 namespace WebApiTemplate.Services;
@@ -25,8 +26,17 @@ public class UserService : IUserService {
         await _userManager.CreateAsync(user, pass);
         return user;
     }
+
+    public async Task<UserDetailsDto?> GetUserDetails(string userId) {
+        return await _context.Users.Where(u => u.Id == userId)
+            .Select(u=> new UserDetailsDto(u.Email ?? "", u.FirstName ?? "", u.LastName ?? ""))
+            .FirstOrDefaultAsync();
+    }
 }
 
 public interface IUserService {
     public Task<User> CreateTestUser();
+    Task<UserDetailsDto?> GetUserDetails(string userId);
 }
+
+public record UserDetailsDto(string email, string firstName, string lastName);

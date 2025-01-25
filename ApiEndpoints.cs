@@ -92,7 +92,7 @@ public static class ApiEndpoints {
             }
 
             // save file to temp storage
-            string tempPath = Path.GetTempPath();
+            string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
             using (var stream = File.Create(tempPath))
             {
                 await file.CopyToAsync(stream);
@@ -103,6 +103,8 @@ public static class ApiEndpoints {
                 throw new Exception("not implemented other filetype support");
             }
             var transcript = await GetTranscription(tempPath);
+
+            File.Delete(tempPath);
 
             // save transcription to group
             var contentFile = new ContentFile {
@@ -137,9 +139,19 @@ public static class ApiEndpoints {
             return "hello world!";
         });
 
-        app.MapGet("/checkIfLoggedIn", async () => {
+        app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
+            IUserService userService) => {
 
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
 
+            var userDetails = await userService.GetUserDetails(user.Id);
+            if (userDetails is null) {
+                return Results.Unauthorized();
+            }
+            return Results.Json(userDetails);
         });
 
         app.MapGet("/createTestUser", async (IUserService userService) => {
