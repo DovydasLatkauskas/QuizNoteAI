@@ -23,7 +23,7 @@ public static class ApiEndpoints {
                 return Results.Json(quizzesResponse);
         });
 
-        app.MapGet("/GeminiQuiz", async (string groupId, List<string> filePathsToUse,
+        app.MapGet("/GeminiQuiz", async (string groupId, List<string> idsOfFiles,
             ILLMService llmService, IContentService contentService,
             HttpContext httpContext, UserManager<User> userManager) => {
             var user = await userManager.GetUserAsync(httpContext.User);
