@@ -86,16 +86,25 @@ public static class ApiEndpoints {
 
             // save file to temp storage
             string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
-            using (var stream = File.Create(tempPath))
+            await using (var stream = File.Create(tempPath))
             {
                 await file.CopyToAsync(stream);
             }
 
             // get transcription
-            // if (file_type != "mp3") {
-            //     throw new Exception("not implemented other filetype support");
-            // }
-            var transcript = await GetTranscription(tempPath);
+            var ct = file.ContentType;
+            var text = "";
+            if (ct.StartsWith("audio/") || ct.StartsWith("video/")) {
+                var transcript = await GetTranscription(tempPath);
+                text = transcript.Text ?? "";
+            }
+            else if (ct == "text/plain") {
+                using var reader = new StreamReader(file.OpenReadStream());
+                text = await reader.ReadToEndAsync();
+            }
+            else {
+                return Results.BadRequest("Not implemented: other filetype support.");
+            }
 
             File.Delete(tempPath);
 
@@ -104,7 +113,7 @@ public static class ApiEndpoints {
                 Id = Guid.NewGuid(),
                 Name = fileName,
                 UploadedAtUtc = DateTime.UtcNow,
-                Text = transcript.Text ?? ""
+                Text = text
             };
 
             var scfResp = await contentService.SaveContentFile(contentFile, groupName, subGroupName, user.Id);
