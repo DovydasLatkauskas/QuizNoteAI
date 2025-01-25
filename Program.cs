@@ -8,10 +8,10 @@ builder.Services.AddCors(co =>
 {
     co.AddDefaultPolicy(pb =>
     {
-        pb.AllowAnyOrigin()
-            .AllowAnyHeader()
+        pb.WithOrigins("http://localhost:3000") // Specify the allowed frontend origin
             .AllowAnyMethod()
-            .WithExposedHeaders("X-Total-Count");
+            .AllowAnyHeader()
+            .AllowCredentials(); // Explicitly allow credentials
     });
 });
 
@@ -25,6 +25,8 @@ builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("D
 AuthenticationConfig.AddAuthServices(builder);
 
 var app = builder.Build();
+
+app.UseCors();
 
 if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
