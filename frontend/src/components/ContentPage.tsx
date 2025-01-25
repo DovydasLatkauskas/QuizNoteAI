@@ -112,7 +112,7 @@ export default function ContentPage(){
     const formData = new FormData();
     formData.append("file", values.file); // `values.file` now contains the actual `File` object
     console.log("File: ", formData.get("file"));
-    
+
     const file = formData.get("file") as File | null;
     if (file) {
       console.log("File Name: ", file.name);
@@ -124,14 +124,14 @@ export default function ContentPage(){
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 border border-neutral-200 dark:border-neutral-700 p-4 rounded-md">
         <FormField
           control={form.control}
           name="file"
           render={({ field }) => (
-            <>
+            <div className="flex flex-row gap-4">
               {/* Group? */}
-              <FormItem>
+              <FormItem className="w-64">
                 <FormLabel>Course:</FormLabel>
                 <FormControl>
                   <SelectGroupMenu control={form.control} />
@@ -143,8 +143,8 @@ export default function ContentPage(){
               </FormItem>
 
               {/* File Upload */}
-              <FormItem>
-                <FormLabel>Upload File</FormLabel>
+              <FormItem className="w-64">
+                <FormLabel>Upload File:</FormLabel>
                 <FormControl>
                   <Input
                     type="file"
@@ -161,7 +161,7 @@ export default function ContentPage(){
                 </FormDescription>
                 <FormMessage />
               </FormItem>
-            </>
+            </div>
           )}
         />
         <Button type="submit">Submit</Button>
