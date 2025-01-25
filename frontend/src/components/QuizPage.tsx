@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // Import Framer Motion
 import { getQuiz } from "../../api/backend";
+
 import { Button } from "./ui/button";
 import { useRouter } from 'next/router';
-
 
 interface QuizPageProps {
     quiz?: string | string[] | undefined;
@@ -28,7 +28,6 @@ const QuizQuestions: React.FC<{
     const handleReturnClick = () => {
         router.push('/Dashboard/Quizzes');
       };
-
     const handleAnswerClick = (answerIndex: number) => {
         if (!isSubmitted) {
             setSelectedAnswers((prevSelectedAnswers) => ({

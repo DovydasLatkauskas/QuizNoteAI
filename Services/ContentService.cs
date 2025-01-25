@@ -20,31 +20,31 @@ public class ContentService : IContentService {
     }
 
     public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId) {
-        var usr = await _context.Users.Include(u=> u.Groups).ThenInclude(g=> g.ContentFiles)
-            .Include(u=> u.Groups).ThenInclude(g => g.Subgroups).ThenInclude(s=>s.ContentFiles)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-        if (usr is null) {
-            return false;
-        }
-
-        var grp = usr.Groups.FirstOrDefault(g => g.Name == groupName);
+        var grp = _context.Groups.Include(g=> g.ContentFiles)
+            .Include(g=> g.Subgroups).ThenInclude(sg => sg.ContentFiles)
+            .FirstOrDefault(g => g.UserId == userId && g.Name == groupName);
         if (grp is null) {
             return false;
         }
 
+        contentFile.GroupId = grp.Id;
         if (subGroupName is null) {
-            grp.ContentFiles.Add(contentFile);
+            _context.ContentFiles.Add(contentFile);
         }
         else {
             var subg = grp.Subgroups.FirstOrDefault(sg=> sg.Name == subGroupName);
             if (subg is null) {
-                var sg = new Subgroup();
-                sg.ContentFiles.Add(contentFile);
-                grp.Subgroups.Add(sg);
+                subg = new Subgroup {
+                    Name = subGroupName,
+                    ContentFiles = new List<ContentFile>{contentFile},
+                    GroupId = grp.Id
+                };
+                _context.Subgroups.Add(subg);
             }
             else {
-                subg.ContentFiles.Add(contentFile);
+                _context.ContentFiles.Add(contentFile);
             }
+            contentFile.SubgroupId = subg.Id;
         }
 
         await _context.SaveChangesAsync();
