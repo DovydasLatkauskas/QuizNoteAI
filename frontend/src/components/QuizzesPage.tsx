@@ -1,8 +1,22 @@
 import { Button } from "./ui/button"
 import { motion } from "framer-motion"
 import ExpandableCardDemo from "@/components/ExpandableCardDemo"
+import { getQuizzes } from "../../api/backend";
 
 export default function QuizzesPage(){
+  
+  const fetchQuizzes = async () => {
+    try {
+        const response = await getQuizzes()
+        const data = await response.json()
+        console.log(data)
+        return data
+    }
+    catch (error) {
+        console.error('Error:', error);
+    }
+  }
+  
   const colorBank = ["bg-blue-200", "bg-green-200", "bg-yellow-200", "bg-red-200", "bg-purple-200", "bg-pink-200", "bg-indigo-200", "bg-gray-200", "bg-orange-200"]
 
   // Load all quizzes in this format:
@@ -28,66 +42,7 @@ export default function QuizzesPage(){
   // let json = JSON.parse(string)
   // console.log(json)
 
-  let quizzes: QuizContent[] = [
-    {
-      quizID: 1,
-      title:"Capitals and Countries",
-      description: "Test your knowledge of world capitals!",
-      ctaText: "Start Quiz",
-      ctaLink: `/Dashboard/Quizzes/${1}`,
-      imageNumber: 1,
-      sources: ["slides-week-1.pdf"],
-      questions: [
-        {
-          question: "What is the capital of France?",
-          answers: ["Paris", "Berlin", "London", "Madrid"],
-          correctAnswer: "Paris",
-          source:"slides-week-1.pdf"
-        },
-        {
-          question: "What is the capital of Germany?",
-          answers: ["Paris", "Berlin", "London", "Madrid"],
-          correctAnswer: "Berlin",
-          source:"slides-week-1.pdf"
-        },
-        {
-          question: "What is the capital of the UK?",
-          answers: ["Paris", "Berlin", "London", "Madrid"],
-          correctAnswer: "London",
-          source:"slides-week-1.pdf"
-        },
-        {
-          question: "What is the capital of Spain?",
-          answers: ["Paris", "Berlin", "London", "Madrid"],
-          correctAnswer: "Madrid",
-          source:"slides-week-1.pdf"
-        }
-      ],
-    },
-    {
-      quizID: 2,
-      title:"Star Wars Trivia",
-      description: "Test your knowledge of Star Wars!",
-      ctaText: "Start Quiz",
-      ctaLink: `/Dashboard/Quizzes/${2}`,
-      imageNumber: 2,
-      sources: ["star-wars-info.pdf"],
-      questions: [
-        {
-          question: "Who is Luke Skywalker's father?",
-          answers: ["Darth Vader", "Obi-Wan Kenobi", "Han Solo", "Yoda"],
-          correctAnswer: "Darth Vader",
-          source:"star-wars-info.pdf"
-        },
-        {
-          question: "What is the name of the planet that is home to Wookies?",
-          answers: ["Tatooine", "Hoth", "Endor", "Kashyyyk"],
-          correctAnswer: "Kashyyyk",
-          source:"star-wars-info.pdf"
-        },
-      ],
-    }
-  ]
+  let quizzes: any = fetchQuizzes()
 
 
   return(

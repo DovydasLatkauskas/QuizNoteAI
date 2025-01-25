@@ -26,9 +26,19 @@ export const createTestUser = async () => {
     }
 };
 
-export const getQuiz = async () => {
+export const getQuizzes = async () => {
     try {
-        const response = await axios.get('/GeminiQuiz');
+        const response = await axios.get('/user-quizzes');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        throw error;
+    }
+};
+
+export const getQuiz = async (quizID) => {
+    try {
+        const response = await axios.get('/GeminiQuiz', quizID);
         return response.data;
     } catch (error) {
         console.error('Error fetching quiz:', error);
