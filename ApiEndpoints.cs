@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Text;
 using AssemblyAI;
 using AssemblyAI.Transcripts;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -189,7 +188,7 @@ public static class ApiEndpoints {
             }
 
             // save file to temp storage
-            string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
+            string tempPath = $"{Path.GetTempPath()}{file.FileName}{Guid.NewGuid()}";
             await using (var stream = File.Create(tempPath))
             {
                 await file.CopyToAsync(stream);

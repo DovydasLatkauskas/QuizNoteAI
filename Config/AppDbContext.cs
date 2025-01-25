@@ -27,5 +27,15 @@ public class AppDbContext : IdentityDbContext<User> {
             .WithMany(u => u.Groups)
             .HasForeignKey(g => g.UserId)
             .IsRequired();
+
+        builder.Entity<ContentFile>()
+            .HasOne(cf => cf.Group)
+            .WithMany(g => g.ContentFiles)
+            .HasForeignKey(cf => cf.GroupId);
+
+        builder.Entity<ContentFile>()
+            .HasOne(cf => cf.Subgroup)
+            .WithMany(sg => sg.ContentFiles)
+            .HasForeignKey(cf => cf.SubgroupId);
     }
 }
