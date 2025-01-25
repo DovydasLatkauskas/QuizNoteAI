@@ -16,7 +16,6 @@ interface Quiz {
   description: string;
   ctaText: string;
   ctaLink: string;
-  content: string;
   imageNumber: number;
 }
 
@@ -123,7 +122,6 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     href={active.ctaLink}
-                    target="_blank"
                     className="px-4 py-3 text-sm rounded-full font-bold bg-blue-500 text-white"
                   >
                     {active.ctaText}

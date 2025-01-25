@@ -83,6 +83,10 @@ public static class ApiEndpoints {
                 return Results.NotFound("group not found by name");
             }
 
+            if (subGroupName == "") {
+                subGroupName = null;
+            }
+
             // save file to temp storage
             string tempPath = $"{Path.GetTempPath()}/{file.FileName}{Guid.NewGuid()}";
             await using (var stream = File.Create(tempPath))
@@ -136,10 +140,6 @@ public static class ApiEndpoints {
     }
 
     private static void TestEndpoints(this WebApplication app) {
-        app.MapGet("/", () => {
-            return "hello world!";
-        });
-
         app.MapGet("/getUserDetails", async (HttpContext httpContext, UserManager<User> userManager,
             IUserService userService) => {
 
@@ -160,10 +160,7 @@ public static class ApiEndpoints {
             return Results.Text($"created user with name: {user.FirstName} {user.LastName}");
         });
 
-        app.MapGet("/GeminiQuiz", async () => {
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
-            
-
+        app.MapGet("/GeminiQuiz", async (ILLMService llmService) => {
             string userPrompt = "";
 
             string combinedPrompt = $@"Generate a 5-question multiple choice quiz based on the information provided in the attached file. Ensure the questions cover a range of key concepts, and include four answer choices for each question, with the correct answer clearly indicated. The questions should be clear and concise. Ensure that the answer choices are similar in content and structure and that it’s not immediately obvious which option is correct. Provide four plausible answer choices for each question, with only one correct answer. Label the answers a through d. Additonally, include the number coressponding to the source from where the information was taken.
@@ -231,46 +228,22 @@ public static class ApiEndpoints {
             {
                 combinedPrompt += $"{i + 1}. {fileContent[i]}";
             }
-            var requestBody = new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = combinedPrompt}
-                        }
-                    }
-                }
-            };
 
-            string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
-
-            using var httpClient = new HttpClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = new StringContent(jsonBody, Encoding.UTF8,  "application/json")
-            };
-
-            HttpResponseMessage response = await httpClient.SendAsync(request);
-
-            string responseBody = await response.Content.ReadAsStringAsync();
+            var responseBody = await llmService.PromptGemini(combinedPrompt);
 
             return Results.Text(responseBody);
         });
-        
-        app.MapGet("/GeminiSummarize", async () => {
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
-            
+
+        app.MapPost("/GeminiSummarize", async (ILLMService llmService, [FromBody]List<string> filesToInclude,
+            IContentService contentService) => {
             string combinedPrompt = $@"Please summarize the information provided. Focus on the key points, important concepts, and any notable details which might be necessary to study the material. Keep the summary concise, clear, and to the point. Provide the answer .\n\n +
                                     Please summarize the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
                                         ""document title"": ""<Please provide a title for the document fewer than 30 characters. >""
                                         ""summary"": ""<Please provide a summary of the document.>""
                                     }}
-                                    Now here is the content to summarize: "; 
+                                    Now here is the content to summarize: ";
+
             string[] fileContent =
             {
                 "Whales are a widely distributed and diverse group of fully aquatic placental marine mammals. As an informal and colloquial grouping, they correspond to large members of the infraorder Cetacea, i.e. all cetaceans apart from dolphins and porpoises. Dolphins and porpoises may be considered whales from a formal, cladistic perspective. Whales, dolphins and porpoises belong to the order Cetartiodactyla, which consists of even-toed ungulates. Their closest non-cetacean living relatives are the hippopotamuses, from which they and other cetaceans diverged about 54 million years ago. The two parvorders of whales, baleen whales (Mysticeti) and toothed whales (Odontoceti), are thought to have had their last common ancestor around 34 million years ago. Mysticetes include four extant (living) families: Balaenopteridae (the rorquals), Balaenidae (right whales), Cetotheriidae (the pygmy right whale), and Eschrichtiidae (the grey whale). Odontocetes include the Monodontidae (belugas and narwhals), Physeteridae (the sperm whale), Kogiidae (the dwarf and pygmy sperm whale), and Ziphiidae (the beaked whales), as well as the six families of dolphins and porpoises which are not considered whales in the informal sense.",
@@ -281,32 +254,8 @@ public static class ApiEndpoints {
                 combinedPrompt += $"{i + 1}. {fileContent[i]}";
             }
             Console.WriteLine(combinedPrompt);
-            var requestBody = new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = combinedPrompt}
-                        }
-                    }
-                }
-            };
 
-            string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
-
-            using var httpClient = new HttpClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = new StringContent(jsonBody, Encoding.UTF8,  "application/json")
-            };
-
-            HttpResponseMessage response = await httpClient.SendAsync(request);
-
-            string responseBody = await response.Content.ReadAsStringAsync();
+            var responseBody = await llmService.PromptGemini(combinedPrompt);
 
             return Results.Text(responseBody);
         });
