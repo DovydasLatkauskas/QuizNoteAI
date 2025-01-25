@@ -290,7 +290,7 @@ const Content: React.FC<ContentProps> = ({ index, filePath, content, type, check
     
     return(
       <Tabs defaultValue={defaultGroup} className="w-full" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${numOfCols} gap-4`}>
+        <TabsList className={` gap-4`}>
           {groups.map((group: any, index: number) => (
             <TabsTrigger key={index} value={group.title}>{group.title}</TabsTrigger>
           ))}
