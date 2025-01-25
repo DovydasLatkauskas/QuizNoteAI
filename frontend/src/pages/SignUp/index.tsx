@@ -10,12 +10,25 @@ import {
 import { Button } from "@/components/ui/button";
 import "../../app/globals.css";
 import Link from 'next/link'
+import {registerUser} from "../../../api/backend";
+import {router} from "next/client";
 
 
 export default function SignUp() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted");
+    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+    const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
+    const firstname = (e.currentTarget.elements.namedItem('firstname') as HTMLInputElement).value;
+    const lastname = (e.currentTarget.elements.namedItem('lastname') as HTMLInputElement).value;
+
+    try {
+      const data = registerUser({'email': email, 'password': password, 'firstname': firstname, 'lastname': lastname});
+      await router.push("/Dashboard");
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      alert('Invalid email or password');
+    }
   };
 
   return (
