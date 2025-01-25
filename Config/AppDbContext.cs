@@ -21,5 +21,11 @@ public class AppDbContext : IdentityDbContext<User> {
         builder.Entity<Question>()
             .Property(q => q.Answers)
             .HasColumnType("jsonb");
+
+        builder.Entity<Group>()
+            .HasOne(g => g.User)
+            .WithMany(u => u.Groups)
+            .HasForeignKey(g => g.UserId)
+            .IsRequired();
     }
 }

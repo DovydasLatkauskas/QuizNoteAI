@@ -82,14 +82,14 @@ public class ContentService : IContentService {
     }
 
     public async Task<bool> CreateGroup(string userId, string groupName) {
-        var usr = await _context.Users
-            .Include(u=> u.Groups).FirstAsync(u=> u.Id == userId);
-        if (usr.Groups.Any(g=> g.Name == groupName)) {
+        var grps = _context.Groups.Where(g => g.UserId == userId).ToList();
+        if (grps.Any(g=> g.Name == groupName)) {
             return false;
         }
 
-        usr.Groups.Add(new Group {
-            Name = groupName
+        _context.Groups.Add(new Group {
+            Name = groupName,
+            UserId = userId
         });
 
         await _context.SaveChangesAsync();
