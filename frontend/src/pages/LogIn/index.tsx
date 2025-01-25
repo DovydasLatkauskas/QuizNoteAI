@@ -10,14 +10,25 @@ import {
 import { Button } from "@/components/ui/button";
 import "../../app/globals.css";
 import Link from 'next/link'
-
+import { useRouter } from "next/router";
+import {loginUser} from "../../../api/backend";
 
 export default function LogIn() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const router = useRouter();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted");
-  };
+    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+    const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
 
+    try {
+      const data = loginUser({'email': email, 'password': password});
+      await router.push("/Dashboard");
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      alert('Invalid email or password');
+    }
+  };
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-neutral-100 dark:bg-black">
       <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
