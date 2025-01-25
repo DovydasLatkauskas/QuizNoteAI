@@ -10,7 +10,7 @@ const apiClient = axios.create({
     baseURL: 'http://localhost:8080', // Adjust the base URL as needed
     headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token,
+        'Authorization': 'Bearer ' + token
     },
     withCredentials: true, // Allows sending cookies with the request
 });
