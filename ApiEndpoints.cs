@@ -100,10 +100,8 @@ public static class ApiEndpoints {
             var contentFile = new ContentFile {
                 Id = Guid.NewGuid(),
                 Name = file_name,
-                SubgroupPath = subPath,
                 UploadedAtUtc = DateTime.UtcNow,
-                Text = transcript.Text ?? "",
-                Summary = null
+                Text = transcript.Text ?? ""
             };
 
             var scfResp = await contentService.SaveContentFile(contentFile, groupName);
@@ -114,15 +112,16 @@ public static class ApiEndpoints {
             return Results.Ok();
         });
 
-        // app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
-        //     IContentService contentService) => {
-        //     var user = await userManager.GetUserAsync(httpContext.User);
-        //     if (user is null) {
-        //         return Results.Unauthorized();
-        //     }
-        //
-        //     string groupTree = await contentService.GetUserGroupTree(user);
-        // });
+        app.MapGet("/show-groups", async (HttpContext httpContext, UserManager<User> userManager,
+            IContentService contentService) => {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            var groupTree = await contentService.GetUserGroupTree(user);
+            return Results.Json(groupTree);
+        });
     }
 
     private static void TestEndpoints(this WebApplication app) {

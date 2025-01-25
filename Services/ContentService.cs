@@ -18,18 +18,6 @@ public class ContentService : IContentService {
         return grp is not null;
     }
 
-    // public async Task<string> GetUserGroupTree(User user) {
-    //     var grps = await _context.Groups
-    //         .Include(g => g.Subgroups).Include(g => g.ContentFiles)
-    //         .Where(g => g.OwnerId == Guid.Parse(user.Id)).ToListAsync();
-    //
-    //     List<> outp = new();
-    //
-    //     foreach (var grp in grps) {
-    //         outp.
-    //     }
-    // }
-
     public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName) {
         var grp = await _context.Groups.Include(g => g.Subgroups)
             .FirstOrDefaultAsync(g => g.Name == groupName);
@@ -38,22 +26,46 @@ public class ContentService : IContentService {
         }
 
         grp.ContentFiles.Add(contentFile);
-        if (!grp.Subgroups.Contains(contentFile.SubgroupPath)) {
-            grp.Subgroups.Add(contentFile.SubgroupPath);
-        }
 
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<UserTreeDto> GetUserGroupTree(User user) {
+        var grps = await _context.Groups
+            .Include(g => g.Subgroups).Include(g => g.ContentFiles)
+            .Where(g => g.OwnerId == Guid.Parse(user.Id)).ToListAsync();
+
+        var outp = new UserTreeDto(new List<GroupTreeDto>());
+        foreach (var grp in grps) {
+            var gt = new GroupTreeDto(grp.Name, new List<SubGroupDto>(), new List<ContentFilePropsDto>());
+
+            foreach (var sg in grp.Subgroups) {
+                var sgDto = new SubGroupDto(new List<ContentFilePropsDto>());
+
+                foreach (var cf in sg.ContentFiles) {
+                    sgDto.contentFileProperties.Add(new ContentFilePropsDto(cf.Name, cf.UploadedAtUtc));
+                }
+                gt.subGroups.Add(sgDto);
+            }
+
+            foreach (var cf in grp.ContentFiles) {
+                gt.contentFileProperties.Add(new ContentFilePropsDto(cf.Name, cf.UploadedAtUtc));
+            }
+            outp.gt.Add(gt);
+        }
+
+        return outp;
     }
 }
 
 public interface IContentService {
     public Task<bool> SaveContentFile(ContentFile contentFile, string group);
     public Task<bool> CheckGroupExists(string groupName);
-    // Task<string> GetUserGroupTree(User user);
+    Task<UserTreeDto> GetUserGroupTree(User user);
 }
 
-public record UserGroupTreeDto(List<SingleGroupTreeDto> sgt);
-public record SingleGroupTreeDto(string groupName, List<SubGroupDto> subGroups);
-public record SubGroupDto(List<SubGroupDto> NestedSubGroups, List<ContentFilePropertiesDto> contentFileProperties);
-public record ContentFilePropertiesDto();
+public record UserTreeDto(List<GroupTreeDto> gt);
+public record GroupTreeDto(string groupName, List<SubGroupDto> subGroups, List<ContentFilePropsDto> contentFileProperties);
+public record SubGroupDto(List<ContentFilePropsDto> contentFileProperties);
+public record ContentFilePropsDto(string name, DateTime uploadedAt);
