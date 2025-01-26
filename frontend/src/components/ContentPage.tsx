@@ -107,27 +107,7 @@ const loadingStates = [
 // - Select all button for each group
 
 
-export function SelectGroupMenu({ control } : { control: any }) {
-  return (
-    <Controller
-      name="selectGroup"
-      control={control}
-      render={({ field }) => (
-        <Select onValueChange={field.onChange} value={field.value}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Course" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="CISC 454">CISC 454</SelectItem>
-            <SelectItem value="CISC 121">CISC 121</SelectItem>
-            <SelectItem value="CISC 486">CISC 486</SelectItem>
-          </SelectContent>
-        </Select>
 
-      )}
-    />
-  )
-}
 
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<any[]>([]); // Files that are checked
@@ -139,6 +119,28 @@ export default function ContentPage(){
   const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
   const [createGroupModalOpen, setCreateGroupModalOpen] = useState<boolean>(false);
   
+  function SelectGroupMenu({ control } : { control: any }) {
+    return (
+      <Controller
+        name="selectGroup"
+        control={control}
+        render={({ field }) => (
+          <Select onValueChange={field.onChange} value={field.value}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Course" />
+            </SelectTrigger>
+            <SelectContent>
+              {appData.map((group: any, index: number) => (
+                <SelectItem key={index} value={group.groupName}>{group.groupName}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+  
+        )}
+      />
+    )
+  }
+
   // Creating quiz
   const createQuiz = async (numberOfQuestions: number, userPrompt: string) => {
     if (checkedItems.length === 0) {
@@ -160,8 +162,12 @@ export default function ContentPage(){
   const handleCreateGroup = async (groupName : string, colour : string) => {
     console.log("Creating group: ", groupName, " With colour: ", colour);
     try {
-      const response = await createGroup(groupName, colour);
-      console.log("Group created successfully", response);    
+      const response = await createGroup(groupName, colour)
+      .then((response) => {
+        console.log("Group created successfully", response);
+        setCreateGroupModalOpen(false);
+        // Refresh the useEffect thingy
+      });
     }  
     catch (error) {
       console.error('Failed to create group:', error);
@@ -525,7 +531,7 @@ export default function ContentPage(){
     setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
   }) {
     return (
-      <Dialog >
+      <Dialog>
         <DialogTrigger asChild>
           <Button onClick={() => {setContentModalOpen(true)}} variant={"secondary"} className="w-fit border-2 border-blue-500 bg-transparent text-blue-500 hover:bg-blue-500 hover:text-white">
             <CirclePlus/> Add Content
@@ -598,14 +604,14 @@ export default function ContentPage(){
   )
   };
 
-  function CreateGroupDialog({ contentModalOpen, setContentModalOpen }: {
-    contentModalOpen: boolean,
-    setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
+  function CreateGroupDialog({ createGroupModalOpen, setCreateGroupModalOpen }: {
+    createGroupModalOpen: boolean,
+    setCreateGroupModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
   }){
     return (
-      <Dialog >
+      <Dialog open={createGroupModalOpen} onOpenChange={setCreateGroupModalOpen}>
         <DialogTrigger asChild>
-          <Button onClick={() => {setContentModalOpen(true)}} className="bg-[#F4F4F5] text-black hover:bg-gray-300">
+          <Button onClick={() => {setCreateGroupModalOpen(true)}} className="bg-[#F4F4F5] text-black hover:bg-gray-300">
             <CirclePlus/> Create Group
           </Button>
         </DialogTrigger>
@@ -727,7 +733,7 @@ export default function ContentPage(){
                   <TabsTrigger key={index} value={group.groupName}>{group.groupName}</TabsTrigger>
                 ))}
               </TabsList>
-              <CreateGroupDialog contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
+              <CreateGroupDialog createGroupModalOpen={createGroupModalOpen} setCreateGroupModalOpen={setCreateGroupModalOpen}/>
             </div>
       
             {curGroups.map((group: any, index: number) => (
@@ -787,7 +793,7 @@ export default function ContentPage(){
           }
         </div>
         <GroupTabsMenu/>
-        <Button onClick={()=>{console.log(checkedItems)}}>Press for test</Button>
+        {/* <Button onClick={()=>{console.log(checkedItems)}}>Press for test</Button> */}
         
         {/* LOADING MECHANISM */}
         {quizModalOpen && (

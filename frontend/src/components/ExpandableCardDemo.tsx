@@ -11,21 +11,30 @@ import Book5 from "@/../public/thumbnails/thumbnail5.jpg";
 
 const images = [Book1, Book2, Book3, Book4, Book5];
 
-interface Quiz {
-  title: string;
-  description: string;
-  ctaText: string;
-  ctaLink: string;
-  imageNumber: number;
-}
-
 interface ExpandableCardDemoProps {
-  quizzes: Quiz[];
+  quizzes: QuizGroups[];
   loading: boolean;
 }
 
+interface QuizGroups {
+  groupName: string;
+  quizzes: Quiz[];
+}
+
+interface Quiz {
+  title: string;
+  description: string;
+  groupId: string;
+  id: string;
+  imageNumber: number;
+  questions: any[]; // TODO:
+  sources: string[];
+  ctaText: string;
+  ctaLink: string;
+}
+
 export default function ExpandableCardDemo({ quizzes, loading }: ExpandableCardDemoProps) {
-  // console.log(quizzes)
+  console.log("Quizzes: ", quizzes,"\n\n")
   const [active, setActive] = useState<Quiz | boolean | null>(null);
   const id = useId();
   const ref = useRef<any>(null);
@@ -122,10 +131,10 @@ export default function ExpandableCardDemo({ quizzes, loading }: ExpandableCardD
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    href={active.ctaLink}
+                    href={"/Dashboard/Quizzes/" + active.id}
                     className="px-4 py-3 text-sm rounded-full font-bold bg-blue-500 text-white font-sans"
                   >
-                    {active.ctaText}
+                    Start Quiz
                   </motion.a>
                 </div>
                 <div className="pt-4 relative px-4">
@@ -145,40 +154,46 @@ export default function ExpandableCardDemo({ quizzes, loading }: ExpandableCardD
         ) : null}
       </AnimatePresence>
       <ul className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
-        {loading ? "" : quizzes.map((card : any) => (
-          <motion.div
-            layoutId={`card-${card.title}-${id}`}
-            key={card.title}
-            onClick={() => setActive(card)}
-            className="p-4 flex flex-col  hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer border"
-          >
-            <div className="flex gap-4 flex-col  w-full">
-              <motion.div layoutId={`image-${card.title}-${id}`}>
-                <Image
-                  width={200}
-                  height={100}
-                  src={images[card.imageNumber]}
-                  alt={card.title}
-                  className="h-60 w-full rounded-lg object-cover object-top"
-                />
-              </motion.div>
-              <div className="flex justify-center items-center flex-col">
-                <motion.h3
-                  layoutId={`title-${card.title}-${id}`}
-                  className="font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base font-sans"
-                >
-                  {card.title}
-                </motion.h3>
-                <motion.p
-                  layoutId={`description-${card.description}-${id}`}
-                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base font-sans"
-                >
-                  {card.description}
-                </motion.p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+        {loading
+          ? ""
+          : quizzes
+              .filter((card) => card.quizzes.length > 0) // Filter out cards with no quizzes
+              .map((card: any) =>
+                card.quizzes.map((quiz: any, index: number) => (
+                  <motion.div
+                    layoutId={`quiz-${quiz.title}-${id}-${index}`} // Use unique keys
+                    key={quiz.title + index}
+                    onClick={() => setActive(quiz)}
+                    className="p-4 flex flex-col hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer border"
+                  >
+                    <div className="flex gap-4 flex-col w-full">
+                      <motion.div layoutId={`image-${quiz.title}-${id}`}>
+                        <Image
+                          width={200}
+                          height={100}
+                          src={images[quiz.imageNumber]}
+                          alt={quiz.title}
+                          className="h-60 w-full rounded-lg object-cover object-top"
+                        />
+                      </motion.div>
+                      <div className="flex justify-center items-center flex-col">
+                        <motion.h3
+                          layoutId={`title-${quiz.title}-${id}`}
+                          className="font-bold text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base font-sans"
+                        >
+                          {quiz.title}
+                        </motion.h3>
+                        <motion.p
+                          layoutId={`description-${quiz.description}-${id}`}
+                          className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base font-sans"
+                        >
+                          {quiz.description}
+                        </motion.p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
       </ul>
     </>
   );

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // Import Framer Motion
-import { getQuiz } from "../../api/backend";
+import { getQuizzes } from "../../api/backend";
 
 import { Button } from "./ui/button";
 import { useRouter } from 'next/router';
@@ -78,7 +78,7 @@ const QuizQuestions: React.FC<{
                             Question {currentQuestionIndex + 1} of {questions.length}
                         </div>
 
-                        <h2 className="mb-8 text-4xl font-semibold font-sans">{questions[currentQuestionIndex].question}</h2>
+                        <h2 className="mb-8 text-4xl font-semibold font-sans">{questions[currentQuestionIndex].questionText}</h2>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {questions[currentQuestionIndex].answers.map((answer, i) => {
                                 let bgColor = "bg-none";
@@ -161,29 +161,60 @@ const QuizQuestions: React.FC<{
 };
 
 export default function QuizPage({ quiz }: QuizPageProps) {
-    const sampleQuestions = [
-        {
-            question: "What is the capital of France?",
-            answers: ["Paris", "Blah", "Bleh", "Blue"],
-            correctAnswer: "Paris",
-            source: "slides-week-1.pdf",
-        },
-        {
-            question: "What is the capital of Germany?",
-            answers: ["Blah", "Berlin", "Bleh", "Blue"],
-            correctAnswer: "Berlin",
-            source: "slides-week-1.pdf",
-        },
-    ];
-
-    // const fetchQuiz = async () => {
-    //     const quizData = await getQuiz(quiz);
-    //     console.log(quiz);
-    // };
-
+    const [quizData, setQuizData] = useState<any | null>(null); // Start with null
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    const { id } = router.query;
+  
+    useEffect(() => {
+      const fetchQuizzes = async () => {
+        try {
+          const data = await getQuizzes();
+          const groupQuizzes = data["groupQuizzesDtos"];
+          console.log("Fetched Quizzes:", groupQuizzes);
+  
+          if (Array.isArray(groupQuizzes)) {
+            // Flatten the quizzes, find the matching quiz by ID
+            const allQuizzes = groupQuizzes.flatMap((item) => item.quizzes);
+            const matchedQuiz = allQuizzes.find((quiz) => quiz.id == id);
+  
+            if (matchedQuiz) {
+              console.log("Matched Quiz:", matchedQuiz);
+              setQuizData(matchedQuiz); // Save the full quiz object
+            } else {
+              console.error("Quiz not found for ID:", id);
+              setQuizData(null);
+            }
+          } else {
+            console.error("Unexpected data format for quizzes:", groupQuizzes);
+            setQuizData(null);
+          }
+        } catch (error) {
+          console.error("Error fetching Quizzes:", error);
+          setQuizData(null);
+        } finally {
+          setLoading(false); // Loading complete
+        }
+      };
+  
+      if (id) {
+        fetchQuizzes(); // Fetch quizzes when ID is available
+      }
+    }, [id]);
+  
+    // Wait to render until questions are loaded
+    if (loading || !quizData) {
+      return <div className="flex flex-1 justify-center items-center">Loading...</div>;
+    }
+  
     return (
-        <div className="flex flex-1 justify-center">
-            <QuizQuestions questions={sampleQuestions} />
-        </div>
+      <div className="flex flex-1 justify-center">
+        {quizData.questions ? (
+          <QuizQuestions questions={quizData.questions} />
+        ) : (
+          <div className="text-center">No questions found for this quiz.</div>
+        )}
+      </div>
     );
-}
+  }
+  
