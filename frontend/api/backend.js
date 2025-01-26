@@ -8,7 +8,7 @@ if (typeof window !== 'undefined') {
 }
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080', // Adjust the base URL as needed
+    baseURL: 'http://34.134.223.0:8080', // Adjust the base URL as needed
     headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
@@ -16,7 +16,7 @@ const apiClient = axios.create({
     withCredentials: true, // Allows sending cookies with the request
 });
 const apiClient2 = axios.create({
-    baseURL: 'http://localhost:8080', // Adjust the base URL as needed
+    baseURL: 'http://34.134.223.0:8080', // Adjust the base URL as needed
     headers: {
         'Content-Type': 'multipart/form-data',
         'Authorization': 'Bearer ' + token
