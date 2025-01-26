@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { insertFile, createGroup, showGroups, GeminiQuiz  } from "../../api/backend";
+import { insertFile, createGroup, showGroups, GeminiQuiz, GeminiSummarize } from "../../api/backend";
 import {
   Form,
   FormControl,
@@ -159,6 +159,24 @@ export default function ContentPage(){
     });
   }
 
+  const createSummary = async (nameOfSummaryDoc: string, userPrompt: string) => {
+    if (checkedItems.length === 0) {
+      alert("Please select some content first");
+      return;
+    }
+    let groupId = checkedItems[0].groupId;
+    let idsOfFilesString = checkedItems.map((item) => item.id).join(",");
+    
+    GeminiSummarize(nameOfSummaryDoc,groupId, idsOfFilesString, userPrompt)
+    .then((response) => {
+      console.log("Summary created successfully", response);
+    })
+    .catch((error) => {
+      console.error("Failed to create summary", error);
+    });
+  
+  }
+
   const handleCreateGroup = async (groupName : string, colour : string) => {
     console.log("Creating group: ", groupName, " With colour: ", colour);
     try {
@@ -268,6 +286,11 @@ export default function ContentPage(){
   const createGroupSchema = z.object({
     groupName: z.string(),
     colour: z.string(),
+  });
+
+  const createSummarySchema = z.object({
+    nameOfSummaryDoc: z.string(),
+    specifications: z.string(),
   });
 
 
@@ -382,6 +405,111 @@ export default function ContentPage(){
     );
   }
   
+  function CreateSummaryForm() {
+    const form = useForm<z.infer<typeof createSummarySchema>>({
+      resolver: zodResolver(createSummarySchema),
+      defaultValues: {
+        nameOfSummaryDoc: "",
+        specifications: "",
+      },
+    });
+    function onCreateSummaryFormSubmit(values: z.infer<typeof createSummarySchema>) {
+      const formData = new FormData();
+      formData.append("nameOfSummaryDoc", values.nameOfSummaryDoc);
+      formData.append("specifications", values.specifications);
+      console.log("On Submit Create Summary Form Data: ", formData);
+      // Perform your API call with `formData`
+      createSummary(values.nameOfSummaryDoc, values.specifications)
+        .then((response) => {
+          console.log("Summary created successfully", response);
+        })
+        .catch((error) => {
+          console.error("Failed to create summary", error);
+        });
+    }
+    return (
+      <div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onCreateSummaryFormSubmit)}
+            className="space-y-8 border border-neutral-200 dark:border-neutral-700 p-4 rounded-md"
+          >
+            {/* Name of Summary Document Field */}
+            <FormField
+              control={form.control}
+              name="nameOfSummaryDoc"
+              render={({ field }) => (
+                <FormItem className="mt-6">
+                  <FormLabel className="font-sans font-semibold text-lg">
+                    Name of Summary Document:
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      className="w-full"
+                      placeholder="Name of summary document"
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                      }}
+                    />
+                    {/* <Input
+                      {...field} // Automatically register with React Hook Form
+                      type="text"
+                      className="w-full"
+                      placeholder="Name of summary document"
+                    /> */}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+  
+            {/* Specifications Field */}
+            <FormField
+              control={form.control}
+              name="specifications"
+              render={({ field }) => (
+                <FormItem className="mt-6">
+                  <FormLabel className="font-sans font-semibold text-lg">
+                    Additional Specifications:
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="w-full"
+                      placeholder="Focus on questions from the 18th century of France..."
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                      }}
+                    />
+                    {/* <Textarea
+                      {...field} // Automatically register with React Hook Form
+                      className="w-full"
+                      placeholder="Focus on questions from the 18th century of France..."
+                    /> */}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+              
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 text-white"
+            >
+              <IconBolt />
+              Generate Summary
+            </Button>
+          </form>
+        </Form>
+
+      </div>
+    );
+  }
 
   function InputContentForm() {
     const form = useForm<z.infer<typeof formSchema>>({
@@ -553,6 +681,36 @@ export default function ContentPage(){
     )
   };
 
+  function CreateSummaryDialog({ buttonDisabled, contentModalOpen, setContentModalOpen }: {
+    buttonDisabled: boolean,
+    contentModalOpen: boolean,
+    setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
+  }) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button 
+            onClick={() => {
+              setContentModalOpen(true);
+          }} className="w-fit bg-blue-500 text-white">
+            <CirclePlus/> Create Summary
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="max-w-fit">
+          <DialogHeader >
+            <DialogTitle>Create Summary</DialogTitle>
+            <DialogDescription>
+              Create a summary based on course material you've uploaded.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <CreateSummaryForm></CreateSummaryForm>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
   function CreateQuizDialog({ buttonDisabled, quizModalOpen, setQuizModalOpen }: {
     buttonDisabled: boolean,
     quizModalOpen: boolean,
@@ -788,6 +946,10 @@ export default function ContentPage(){
             null
           }
           { contentModalOpen ? <UploadContentDialog contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
+            : 
+            null
+          }
+          { contentModalOpen ? <CreateSummaryDialog buttonDisabled={checkedItems.length == 0 ? true : false} contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
             : 
             null
           }

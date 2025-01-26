@@ -128,7 +128,7 @@ export const Logo = () => {
         animate={{ opacity: 1 }}
         className="text-large font-sans font-semibold text-black dark:text-white whitespace-pre"
       >
-        Quiz Note AI
+        QuizNoteAI
       </motion.span>
     </Link>
   );

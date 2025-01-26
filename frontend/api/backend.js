@@ -191,7 +191,7 @@ export const showGroups = async () => {
 export const GeminiSummarize = async (nameOfSummaryDoc, groupId, idsOfFilesString, userPrompt) => {
 
     try {
-        const response = await apiClient.get('/GeminiSummarize?nameOfSummaryDoc=' + nameOfSummaryDoc + '&groupID=' + groupId + '&idsOfFilesString=' + idsOfFilesString + '&userPrompt=' + userPrompt);
+        const response = await apiClient.post('/GeminiSummarize?nameOfSummaryDoc=' + nameOfSummaryDoc + '&groupID=' + groupId + '&idsOfFilesString=' + idsOfFilesString + '&userPrompt=' + userPrompt);
         return response.data;
     } catch (error) {
         console.error('Error fetching summary:', error);
