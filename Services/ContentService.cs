@@ -19,7 +19,11 @@ public class ContentService : IContentService {
         return grp is not null;
     }
 
-    public async Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId) {
+    public async Task<bool> SaveContentFile(ContentFile contentFile, string? groupName, string? groupId, string? subGroupName, string userId) {
+        if (groupName is null) {
+            groupName = (await _context.Groups.FindAsync(groupId))!.Name;
+        }
+
         var grp = _context.Groups.Include(g=> g.ContentFiles)
             .Include(g=> g.Subgroups).ThenInclude(sg => sg.ContentFiles)
             .FirstOrDefault(g => g.UserId == userId && g.Name == groupName);
@@ -52,25 +56,14 @@ public class ContentService : IContentService {
     }
 
     public async Task<UserTreeDto> GetUserGroupTree(string userId) {
-        var grps = (await _context.Users
-            .Include(u => u.Groups)
-            .ThenInclude(g => g.Subgroups)
-            .ThenInclude(sg => sg.ContentFiles).Include(u => u.Groups)
-            .ThenInclude(g => g.ContentFiles)
-            .FirstAsync(u => u.Id == userId)).Groups;
+        var grps = _context.Groups.Include(g=> g.ContentFiles)
+            .Where(g => g.UserId == userId);
 
         var outp = new UserTreeDto(new List<GroupTreeDto>());
         foreach (var grp in grps) {
-            var gt = new GroupTreeDto(grp.Name, grp.Id.ToString(), grp.Colour, new List<SubGroupDto>(), new List<ContentFile>());
+            var gt = new GroupTreeDto(grp.Name, grp.Id.ToString(), grp.Colour, new List<ContentFile>());
 
-            foreach (var sg in grp.Subgroups) {
-                var sgDto = new SubGroupDto(new List<ContentFile>());
-
-                sgDto.contentFile.AddRange(sg.ContentFiles);
-                gt.subGroups.Add(sgDto);
-            }
-
-            gt.contentFile.AddRange(grp.ContentFiles);
+            gt.contentFiles.AddRange(grp.ContentFiles);
             outp.gt.Add(gt);
         }
 
@@ -189,7 +182,7 @@ public class ContentService : IContentService {
 }
 
 public interface IContentService {
-    public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId);
+    public Task<bool> SaveContentFile(ContentFile contentFile, string? groupName, string? groupId, string? subGroupName, string userId);
     public bool CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(string userId);
     Task<bool> CreateGroup(string userId, string groupName, string groupColour);
@@ -201,8 +194,7 @@ public interface IContentService {
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
-public record GroupTreeDto(string groupName, string groupId, string groupColour, List<SubGroupDto> subGroups, List<ContentFile> contentFile);
-public record SubGroupDto(List<ContentFile> contentFile);
+public record GroupTreeDto(string groupName, string groupId, string groupColour, List<ContentFile> contentFiles);
 
 public record UserQuizzesDto(List<GroupQuizzesDto> GroupQuizzesDtos);
 public record GroupQuizzesDto(string group, List<Quiz> quizzes);

@@ -37,6 +37,11 @@ public class LLMService : ILLMService {
         return quizResponse;
     }
 
+    public async Task<string> PromptGeminiSummary(string combinedPrompt) {
+        var rsp = await PromptGemini(combinedPrompt);
+        return "";
+    }
+
     public async Task<string> PromptGemini(string prompt) {
         var requestBody = new
         {
@@ -70,6 +75,7 @@ public class LLMService : ILLMService {
 public interface ILLMService {
     public Task<string> PromptGemini(string prompt);
     Task<GeminiQuizResponseDto> PromptGeminiForQuiz(string prompt);
+    Task<string> PromptGeminiSummary(string combinedPrompt);
 }
 
 public record GeminiQuizResponseDto

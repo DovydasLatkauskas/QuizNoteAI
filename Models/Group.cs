@@ -1,4 +1,6 @@
-namespace WebApiTemplate.Models; 
+using System.Text.Json.Serialization;
+
+namespace WebApiTemplate.Models;
 
 public class Group {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -10,6 +12,7 @@ public class Group {
 
     // foreign key and nav property
     public string UserId { get; set; }
+    [JsonIgnore]
     public User User { get; set; }
 }
 
@@ -20,6 +23,7 @@ public class Subgroup {
 
     //fkey and nav props
     public Guid GroupId { get; set; }
+    [JsonIgnore]
     public Group Group { get; set; }
 }
 
@@ -33,6 +37,8 @@ public class ContentFile {
     // fkey and nav properties
     public Guid GroupId { get; set; }
     public Guid? SubgroupId { get; set; }
+    [JsonIgnore]
     public Group Group { get; set; }
+    [JsonIgnore]
     public Subgroup? Subgroup { get; set; }
 }
