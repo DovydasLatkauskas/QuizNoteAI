@@ -132,7 +132,9 @@ public class ContentService : IContentService {
 
 
     public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
-        var qzs = await _context.Groups.Where(g => g.UserId == userId)
+        var qzs = await _context.Groups
+            .Include(g=> g.Quizzes).ThenInclude(q => q.Questions)
+            .Where(g => g.UserId == userId)
             .Select(g=> new GroupQuizzesDto(g.Name, g.Quizzes)).ToListAsync();
 
         return new UserQuizzesDto(qzs);
