@@ -26,9 +26,19 @@ export const createTestUser = async () => {
     }
 };
 
-export const getQuiz = async () => {
+export const getQuizzes = async () => {
     try {
-        const response = await axios.get('/GeminiQuiz');
+        const response = await axios.get('/user-quizzes');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        throw error;
+    }
+};
+
+export const getQuiz = async (quizID) => {
+    try {
+        const response = await axios.get('/GeminiQuiz', quizID);
         return response.data;
     } catch (error) {
         console.error('Error fetching quiz:', error);
@@ -48,7 +58,7 @@ export const getSummary = async () => {
 
 export const registerUser = async (registrationData) => {
     try {
-        await apiClient.post('/register-v2', registrationData);
+        const signUpResponse = await apiClient.post('/register-v2', registrationData);
         const loginResponse = await apiClient.post('/login', {email: registrationData.email, password: registrationData.password});
         localStorage.setItem('token', loginResponse.data['accessToken']);
         return loginResponse.data;
@@ -71,8 +81,9 @@ export const loginUser = async (loginData) => {
 
 export const getUserProfile = async () => {
     try {
-        const response = await apiClient.get('/profile');
-        return response.data;
+        const response = await apiClient.get('/getUserDetails');
+        console.log(response);
+        return response;
     } catch (error) {
         console.error('Error fetching user profile:', error);
         throw error;
@@ -113,35 +124,15 @@ export const insertFile = async (fileData, fileName, fileGroup) => {
     }
 }
 
-export const createGroup = async (groupName) => {
+export const createGroup = async (groupinfo) => {
+    console.log(groupinfo);
     try {
-        const response = await apiClient.post('/create-group', {groupName: groupName});
+        const response = await apiClient.post('/create-group', {'groupName': groupinfo}, {
+
+        });
         return response.data;
     } catch (error) {
         console.error('Error creating group:', error);
-        throw error;
-    }
-}
-export const deleteGroup = async (groupName) => {
-    try {
-        const response = await apiClient.delete('/delete-group', {groupName: groupName});
-        return response.data;
-    } catch (error) {
-        console.error('Error deleting group:', error);
-        throw error;
-    }
-}
-export const renameGroups = async () => {
-    try {
-        const response = await apiClient.put('/rename-groups', 
-            {
-                oldGroupName: groupName,
-                newGroupName: newGroupName
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Error renaming groups:', error);
         throw error;
     }
 }

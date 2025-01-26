@@ -67,7 +67,7 @@ const QuizQuestions: React.FC<{
                 {!isQuizComplete && currentQuestionIndex < questions.length && (
                     <motion.div
                         key={currentQuestionIndex}
-                        className="p-4 border-2 rounded-xl w-[800px] flex flex-col"
+                        className="p-4 w-[800px] flex flex-col"
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -50 }}
@@ -78,31 +78,28 @@ const QuizQuestions: React.FC<{
                             Question {currentQuestionIndex + 1} of {questions.length}
                         </div>
 
-                        <h2 className="mb-16 text-4xl font-semibold font-sans">{questions[currentQuestionIndex].question}</h2>
+                        <h2 className="mb-8 text-4xl font-semibold font-sans">{questions[currentQuestionIndex].question}</h2>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {questions[currentQuestionIndex].answers.map((answer, i) => {
-                                let bgColor = "bg-gray-200 hover:bg-gray-300";
+                                let bgColor = "bg-none";
                                 if (isSubmitted) {
                                     if (selectedAnswers[currentQuestionIndex] === i) {
-                                        bgColor =
-                                            answer ===
-                                            questions[currentQuestionIndex].correctAnswer
-                                                ? "bg-green-500 text-white" // Correct
-                                                : "bg-red-500 text-white"; // Wrong
+                                        bgColor = answer === questions[currentQuestionIndex].correctAnswer
+                                            ? "bg-green-500 text-white border-none" // Correct
+                                            : "bg-red-500 text-white border-none"; // Wrong
                                     } else if (
-                                        answer ===
-                                        questions[currentQuestionIndex].correctAnswer
+                                        answer === questions[currentQuestionIndex].correctAnswer
                                     ) {
-                                        bgColor = "bg-green-500 text-white"; // Highlight correct
+                                        bgColor = "bg-green-400 text-white border-none"; // Highlight correct
                                     }
                                 } else if (selectedAnswers[currentQuestionIndex] === i) {
-                                    bgColor = "bg-blue-500 text-white"; // Selected answer
+                                    bgColor = "bg-blue-300 text-white border-none"; // Selected answer
                                 }
 
                                 return (
                                     <motion.li
                                         key={i}
-                                        className={`cursor-pointer p-2 font-sans rounded ${bgColor}`}
+                                        className={`cursor-pointer p-4 font-sans border-2 border-gray-300 rounded text-lg ${bgColor}`}
                                         whileHover={{ 
                                             scale: 1.025
                                             
@@ -114,31 +111,35 @@ const QuizQuestions: React.FC<{
                                 );
                             })}
                         </ul>
-                        <Button className="mt-6 w-fit self-center font-sans" onClick={handleSubmitQuestion} disabled={isSubmitted}>
-                            Submit
-                        </Button>
-                        {isSubmitted && (
-                            <p className="mt-2">
-                                {scores[currentQuestionIndex]
-                                    ? "Correct! 🎉"
-                                    : `Wrong. The correct answer is: ${
-                                        questions[currentQuestionIndex].correctAnswer
-                                    }`}
-                            </p>
-                        )}
+                        <div className="flex flex-row items-center justify-center mt-6 gap-4">
+                            {!isSubmitted && (
+                                <Button className="w-fit self-center font-sans" onClick={handleSubmitQuestion} disabled={isSubmitted}>
+                                    Submit
+                                </Button>
+                            )}
+                            {!isQuizComplete && isSubmitted && (
+                                <Button
+                                    className="p-2 bg-blue-500 text-white rounded font-sans  w-fit"
+                                    onClick={handleNextQuestion}
+                                >
+                                    {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex flex-col items-center justify-center mt-4">
+                            {isSubmitted && (
+                                <p className="mt-2">
+                                    {scores[currentQuestionIndex]
+                                        ? "Correct! 🎉"
+                                        : `Wrong. The correct answer is: ${
+                                            questions[currentQuestionIndex].correctAnswer
+                                        }`}
+                                </p>
+                            )}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* "Next Question" button */}
-            {!isQuizComplete && isSubmitted && (
-                <button
-                    className="p-2 bg-blue-500 text-white rounded"
-                    onClick={handleNextQuestion}
-                >
-                    {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
-                </button>
-            )}
 
             {/* Completion message */}
             {isQuizComplete && (
@@ -175,10 +176,10 @@ export default function QuizPage({ quiz }: QuizPageProps) {
         },
     ];
 
-    const fetchQuiz = async () => {
-        const quizData = await getQuiz(quiz);
-        console.log(quiz);
-    };
+    // const fetchQuiz = async () => {
+    //     const quizData = await getQuiz(quiz);
+    //     console.log(quiz);
+    // };
 
     return (
         <div className="flex flex-1 justify-center">

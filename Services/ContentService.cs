@@ -82,7 +82,8 @@ public class ContentService : IContentService {
     }
 
     public async Task<bool> CreateGroup(string userId, string groupName) {
-        var grps = _context.Groups.Where(g => g.UserId == userId).ToList();
+        var grps = _context.Groups.Include(g=> g.User)
+            .Where(g => g.UserId == userId).ToList();
         if (grps.Any(g=> g.Name == groupName)) {
             return false;
         }
@@ -152,6 +153,42 @@ public class ContentService : IContentService {
 
         return new UserQuizzesDto(quizzes.ToList());
     }
+
+    public async Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId) {
+        var quizDto = responseBody.quiz;
+
+        var quiz = new Quiz
+        {
+            Title = quizDto.title,
+            Description = quizDto.description,
+            Questions = quizDto.questions.Select(q => new Question
+            {
+                QuestionText = q.question,
+                Answers = q.answers,
+                CorrectAnswer = q.correctAnswer,
+                Source = q.source
+            }).ToList(),
+            Sources = quizDto.questions.Select(q => q.source).Distinct().ToList(),
+            GroupId = Guid.Parse(groupId)
+        };
+
+        try
+        {
+            _context.Quizzes.Add(quiz);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
+
+    public async Task<List<ContentFile>> GetContentFilesByIds(List<Guid> idsOfFiles, string userId) {
+        return await _context.ContentFiles.Include(cf => cf.Group)
+            .ThenInclude(g => g.User)
+            .Where(cf => idsOfFiles.Contains(cf.Id)).ToListAsync();
+    }
 }
 
 public interface IContentService {
@@ -162,6 +199,8 @@ public interface IContentService {
     Task DeleteGroup(string userId, string groupName);
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
     Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
+    Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId);
+    Task<List<ContentFile>> GetContentFilesByIds(List<Guid> idsOfFiles, string userId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);

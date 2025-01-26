@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IconBolt,
-  IconSquareRoundedX
+  IconSquareRoundedX,
+  IconPlus
 } from "@tabler/icons-react"; 
 import { CirclePlus } from "lucide-react"
 import { MultiStepLoader as Loader } from "@/components/ui/multi-step-loader";
@@ -19,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-
+import { insertFile, createGroup } from "../../api/backend";
 import {
   Form,
   FormControl,
@@ -121,6 +122,20 @@ export function SelectGroupMenu({ control } : { control: any }) {
 
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState<string>("");
+
+  const handleCreateGroup = async () => {
+    console.log("Creating group: ", groupName);
+    const data = ({'groupName': groupName});
+    try {
+      const response = await createGroup(data);
+      console.log("Group created successfully", response);    
+    }  
+    catch (error) {
+      console.error('Failed to create group:', error);
+      alert('Failed to create group');
+    }
+  }
   const [activeTab, setActiveTab] = useState<string>("All"); 
   const [contentModalOpen, setContentModalOpen] = useState<boolean>(true);
   const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
@@ -280,9 +295,18 @@ export default function ContentPage(){
       const file = formData.get("file") as File | null;
       if (file) {
         console.log("File Name: ", file.name);
-      }
+      
+        console.log("File Group: ", values.selectGroup);
+        // Perform your API call with `formData`
+        insertFile(formData, file.name, values.selectGroup)
+          .then((response) => {
+            console.log("File uploaded successfully", response);
+          })
+          .catch((error) => {
+            console.error("Failed to upload file", error);
+          });
+      }    
       console.log("File Group: ", values.selectGroup);
-      // Perform your API call with `formData`
     }
 
     return (
@@ -455,11 +479,23 @@ const Content: React.FC<ContentProps> = ({ index, filePath, content, type, check
     
     return(
       <Tabs defaultValue={defaultGroup} className="w-full" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={` gap-4`}>
-          {groups.map((group: any, index: number) => (
-            <TabsTrigger key={index} value={group.title}>{group.title}</TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-row gap-2 items-center">
+          <TabsList className={` gap-4`}>
+            {groups.map((group: any, index: number) => (
+              <TabsTrigger key={index} value={group.title}>{group.title}</TabsTrigger>
+            ))}
+          </TabsList>
+          <Button 
+            className="h-7 bg-blue-500"
+            onClick={() => {
+              // Create a new group
+              // TODO: API Call
+            }}
+          >
+            <IconPlus/>
+          </Button>
+        </div>
+
   
         {groups.map((group: any, index: number) => (
           <TabsContent key={index} value={group.title}>
