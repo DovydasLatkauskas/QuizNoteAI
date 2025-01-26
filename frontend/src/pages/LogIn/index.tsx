@@ -21,7 +21,7 @@ export default function LogIn() {
     const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
 
     try {
-      const data = loginUser({'email': email, 'password': password});
+      const data = await loginUser({'email': email, 'password': password});
       await router.push("/Dashboard");
     } catch (error) {
       console.error('Authentication failed:', error);

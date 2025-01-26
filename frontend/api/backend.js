@@ -24,6 +24,14 @@ const apiClient2 = axios.create({
     withCredentials: true, // Allows sending cookies with the request
 });
 
+apiClient.interceptors.request.use(config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers['Authorization'] = 'Bearer ' + token;
+    }
+    return config;
+});
+
 export const createTestUser = async () => {
     try {
         const response = await apiClient.get('/createTestUser');
