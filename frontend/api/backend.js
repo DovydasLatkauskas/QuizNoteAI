@@ -36,7 +36,7 @@ export const createTestUser = async () => {
 
 export const getQuizzes = async () => {
     try {
-        const response = await axios.get('/user-quizzes');
+        const response = await apiClient.get('/user-quizzes');
         return response.data;
     } catch (error) {
         console.error('Error fetching quizzes:', error);
@@ -46,7 +46,7 @@ export const getQuizzes = async () => {
 
 export const getQuiz = async (quizID) => {
     try {
-        const response = await axios.get('/GeminiQuiz', quizID);
+        const response = await apiClient.get('/GeminiQuiz', quizID);
         return response.data;
     } catch (error) {
         console.error('Error fetching quiz:', error);
@@ -56,7 +56,7 @@ export const getQuiz = async (quizID) => {
 
 export const getSummary = async () => {
     try {
-        const response = await axios.get('/GeminiSummary');
+        const response = await apiClient.get('/GeminiSummary');
         return response.data;
     } catch (error) {
         console.error('Error fetching summary:', error);
