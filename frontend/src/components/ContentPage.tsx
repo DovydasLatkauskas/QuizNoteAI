@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { insertFile, createGroup, showGroups } from "../../api/backend";
+import { insertFile, createGroup, showGroups, GeminiQuiz  } from "../../api/backend";
 import {
   Form,
   FormControl,
@@ -66,6 +66,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+
 
 const loadingStates = [
   {
@@ -121,7 +130,7 @@ export function SelectGroupMenu({ control } : { control: any }) {
 }
 
 export default function ContentPage(){
-  const [checkedItems, setCheckedItems] = useState<string[]>([]); // Files that are checked
+  const [checkedItems, setCheckedItems] = useState<any[]>([]); // Files that are checked
   const [activeTab, setActiveTab] = useState<string>("All"); 
   const [createQuizLoading, setCreateQuizLoading] = useState(false);
   const [appData, setAppData] = useState<any>([]);
@@ -130,6 +139,24 @@ export default function ContentPage(){
   const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
   const [createGroupModalOpen, setCreateGroupModalOpen] = useState<boolean>(false);
   
+  // Creating quiz
+  const createQuiz = async (numberOfQuestions: number, userPrompt: string) => {
+    if (checkedItems.length === 0) {
+      alert("Please select some content first");
+      return;
+    }
+    let groupId = checkedItems[0].groupId;
+    let idsOfFilesString = checkedItems.map((item) => item.id).join(",");
+    
+    GeminiQuiz(groupId, idsOfFilesString, numberOfQuestions, userPrompt)
+    .then((response) => {
+      console.log("Quiz created successfully", response);
+    })
+    .catch((error) => {
+      console.error("Failed to create quiz", error);
+    });
+  }
+
   const handleCreateGroup = async (groupName : string, colour : string) => {
     console.log("Creating group: ", groupName, " With colour: ", colour);
     try {
@@ -176,36 +203,36 @@ export default function ContentPage(){
   }, []); // Empty dependency array ensures this runs only once on mount
   
 
-  let groups = [
-    {
-      title: "CISC 454",
-      files: [
-        {filepath: "lecture_01.mp4", type: "video", content: "0:00 - There was a man named John..."},
-        {filepath: "lecture_notes_02.pdf", type: "document", content: "0:00 - There was another man named Eric"},
-        {filepath: "lecture_03.mp4", type: "video", content: "0:00 - There "},
-      ]
-    },
-    {
-      title: "CISC 372",
-      files: [
-        {filepath: "lecture_01.mp3", type: "audio", content: "0:00 - some other description example"},
-        {filepath: "lecture_02.mp4", type: "video", content: "0:00 - some other description example"},
-      ]
-    },
-    {
-      title: "CISC 235",
-      files: [
-        {filepath: "lecture_01.pdf", type: "audio", content: "0:00 - some other description example"},
-        {filepath: "content_lecture.pdf", type: "document", content: "0:00 - some other description example"},
-      ]
-    },
-  ]
+  // let groups = [
+  //   {
+  //     title: "CISC 454",
+  //     files: [
+  //       {filepath: "lecture_01.mp4", type: "video", content: "0:00 - There was a man named John..."},
+  //       {filepath: "lecture_notes_02.pdf", type: "document", content: "0:00 - There was another man named Eric"},
+  //       {filepath: "lecture_03.mp4", type: "video", content: "0:00 - There "},
+  //     ]
+  //   },
+  //   {
+  //     title: "CISC 372",
+  //     files: [
+  //       {filepath: "lecture_01.mp3", type: "audio", content: "0:00 - some other description example"},
+  //       {filepath: "lecture_02.mp4", type: "video", content: "0:00 - some other description example"},
+  //     ]
+  //   },
+  //   {
+  //     title: "CISC 235",
+  //     files: [
+  //       {filepath: "lecture_01.pdf", type: "audio", content: "0:00 - some other description example"},
+  //       {filepath: "content_lecture.pdf", type: "document", content: "0:00 - some other description example"},
+  //     ]
+  //   },
+  // ]
 
-  const handleCheckboxChange = (filePath: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckboxChange = (file: any) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      setCheckedItems((prev) => [...prev, filePath]);
+      setCheckedItems((prev) => [...prev, file]); // Add tge full file object
     } else {
-      setCheckedItems((prev) => prev.filter((item) => item !== filePath));
+      setCheckedItems((prev) => prev.filter((item) => item.name !== file.name));
     }
   };
 
@@ -250,87 +277,105 @@ export default function ContentPage(){
       },
     });
     function onQuizSubmit(values: z.infer<typeof createQuizSchema>) {
+      setCreateQuizLoading(true);
+      console.log("TESTING TESTING TESTING IPASDFHNLJKASH DKLAHSJLDA")
       const formData = new FormData();
       formData.append("questions", values.questions.toString());
       formData.append("specifications", values.specifications);
       // console.log("Checked Items: ", checkedItems);
-      // console.log("On Submit Create Quiz Form Data: ", formData.get("specifications"));
+      // console.log("On Submit Create Quiz Form Data: ", formData);
       
       // PERFORM API CALL WITH THIS DATA
       let dataSendingToAPI = {
-        questions: formData.get("questions"),
+        questions: parseInt(formData.get("questions") as string, 10),
         specifications: formData.get("specifications"),
-        checkedItems: checkedItems
       }
+      createQuiz(dataSendingToAPI.questions, dataSendingToAPI.specifications as string);
+
     }
     return (
       <div>
         <Form {...form}>
-          <form 
-            onSubmit={form.handleSubmit(onQuizSubmit)} 
+          <form
+            onSubmit={form.handleSubmit(onQuizSubmit)}
             className="space-y-8 border border-neutral-200 dark:border-neutral-700 p-4 rounded-md"
           >
+            {/* Questions Field */}
+            <FormField
+              control={form.control}
+              name="questions"
+              render={({ field }) => (
+                <FormItem className="mt-6">
+                  <FormLabel className="font-sans font-semibold text-lg">
+                    Number of Questions:
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      className="w-full"
+                      placeholder="Number of questions"
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={(e) => {
+                        field.onChange(parseInt(e.target.value, 10));
+                      }}
+                    />
+                    {/* <Input
+                      {...field} // Automatically register with React Hook Form
+                      type="number"
+                      className="w-full"
+                      placeholder="Number of questions"
+                    /> */}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+  
+            {/* Specifications Field */}
             <FormField
               control={form.control}
               name="specifications"
               render={({ field }) => (
-                <div className="flex flex-col gap-4">
-                  <h3 className="font-sans font-semibold text-lg">Drawing material from:</h3>
-                  <div className="flex flex-row gap-4 flex-wrap">
-                    {checkedItems.map((item, index) => {
-                      return (
-                        <div key={index}>
-                          <Badge>{item}</Badge>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <FormItem className="mt-6">
-                    <FormLabel className="font-sans font-semibold text-lg">Number of Questions:</FormLabel>
-                    <FormControl>
-                      <Input
-                          type="number"
-                          className="w-full"
-                          placeholder="Number of questions"
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                          }}
-                          onBlur={field.onBlur}
-                          ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                  <FormItem className="mt-6">
-                    <FormLabel className="font-sans font-semibold text-lg">Additional Specifications:</FormLabel>
-                    <FormControl>
-                      <Textarea
-                          className="w-full"
-                          placeholder="Focus on questions from the 18th century of France..."
-
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                          }}
-                          onBlur={field.onBlur}
-                          ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </div>
+                <FormItem className="mt-6">
+                  <FormLabel className="font-sans font-semibold text-lg">
+                    Additional Specifications:
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="w-full"
+                      placeholder="Focus on questions from the 18th century of France..."
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                      }}
+                    />
+                     {/* <Textarea
+                      {...field} // Automatically register with React Hook Form
+                      className="w-full"
+                      placeholder="Focus on questions from the 18th century of France..."
+                    /> */}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-blue-500 text-white" onClick={() => {
-              setCreateQuizLoading(true);
-              // CALL API HERE
-            }}>
-              <IconBolt/>Generate Quiz
+  
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 text-white"
+            >
+              <IconBolt />
+              Generate Quiz
             </Button>
           </form>
         </Form>
       </div>
     );
-  };
+  }
+  
 
   function InputContentForm() {
     const form = useForm<z.infer<typeof formSchema>>({
@@ -581,6 +626,21 @@ export default function ContentPage(){
   };
 
   const Content: React.FC<ContentProps> = ({ index, filePath, content, type, checked, onChange }) => {
+    // const renderIcon = (fileType: string) => {
+    //   const fileExtension = fileType.toLowerCase();
+  
+    //   if ([".mp4", ".webm", ".mov"].includes(fileExtension)) {
+    //     return <Video className="w-6 h-6 text-blue-500" />; // Video icon
+    //   }
+    //   if ([".mp3", ".wav", ".aac"].includes(fileExtension)) {
+    //     return <Music className="w-6 h-6 text-green-500" />; // Audio icon
+    //   }
+    //   if ([".pdf", ".txt", ".doc", ".docx"].includes(fileExtension)) {
+    //     return <FileText className="w-6 h-6 text-gray-500" />; // Document/Text icon
+    //   }
+    //   return <File className="w-6 h-6 text-neutral-500" />; // Default file icon
+    // };
+  
     return (
       <AnimatePresence>
         <motion.div
@@ -596,27 +656,37 @@ export default function ContentPage(){
             ease: "easeInOut", // Smooth easing
           }}
         >
-          <Card key={index} className={`w-72 ${checked ? "bg-blue-100" : ""}`}>
-            <CardHeader className="flex flex-row items-center gap-2">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={onChange}
-                className="h-4 w-4 rounded"
-              />
-              <CardTitle>{filePath}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>{content.substring(0, 30)}...</CardDescription>
-            </CardContent>
-          </Card>
+          <Sheet>
+            <SheetTrigger>
+              <Card key={index} className={`w-80 ${checked ? "bg-blue-100" : ""}`}>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded"
+                  />
+                  <CardTitle className="text-blue-500">{filePath}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{content.substring(0, 35)}...</CardDescription>
+                </CardContent>
+              </Card>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>{filePath}</SheetTitle>
+                <SheetDescription>{content}</SheetDescription>
+              </SheetHeader>
+            </SheetContent>
+          </Sheet>
+
         </motion.div>
       </AnimatePresence>
     );
   };
 
   function GroupTabsMenu() {
-
     let allFiles = appData.map((group: any) => group.contentFiles).flat();
     let curGroups = []
     // add all groups from app data to curGroups
@@ -639,7 +709,7 @@ export default function ContentPage(){
       }
     );
     let numOfCols = "grid-cols-" + curGroups.length;
-    const defaultGroup = groups.length > 0 ? groups[0].title : "";
+    const defaultGroup = curGroups.length > 0 ? curGroups[0].groupName : "";
     
     return(
       !appData 
@@ -678,8 +748,8 @@ export default function ContentPage(){
                           filePath={file.name}
                           content={file.text}
                           type={`.${file.name.split('.').pop()}`} // Extract file extension
-                          checked={checkedItems.includes(file.name)}
-                          onChange={handleCheckboxChange(file.name)}
+                          checked={checkedItems.some((item) => item.name === file.name)} // check by file name
+                          onChange={handleCheckboxChange(file)}
                         />
                       ))
                     ) : (
@@ -717,6 +787,7 @@ export default function ContentPage(){
           }
         </div>
         <GroupTabsMenu/>
+        <Button onClick={()=>{console.log(checkedItems)}}>Press for test</Button>
         
         {/* LOADING MECHANISM */}
         {quizModalOpen && (
