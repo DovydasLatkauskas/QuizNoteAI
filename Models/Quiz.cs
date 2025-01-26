@@ -7,7 +7,7 @@ public class Quiz
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Title { get; set; }
     public string Description { get; set; }
-    public int ImageNumber { get; set; }
+    public int ImageNumber { get; set; } = new Random().Next(0, 5);
     public List<string> Sources { get; set; }
     public List<Question> Questions { get; set; }
 
