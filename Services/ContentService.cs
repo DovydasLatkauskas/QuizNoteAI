@@ -61,7 +61,7 @@ public class ContentService : IContentService {
 
         var outp = new UserTreeDto(new List<GroupTreeDto>());
         foreach (var grp in grps) {
-            var gt = new GroupTreeDto(grp.Name, grp.Colour, new List<SubGroupDto>(), new List<ContentFile>());
+            var gt = new GroupTreeDto(grp.Name, grp.Id.ToString(), grp.Colour, new List<SubGroupDto>(), new List<ContentFile>());
 
             foreach (var sg in grp.Subgroups) {
                 var sgDto = new SubGroupDto(new List<ContentFile>());
@@ -201,7 +201,7 @@ public interface IContentService {
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
-public record GroupTreeDto(string groupName, string groupColour, List<SubGroupDto> subGroups, List<ContentFile> contentFile);
+public record GroupTreeDto(string groupName, string groupId, string groupColour, List<SubGroupDto> subGroups, List<ContentFile> contentFile);
 public record SubGroupDto(List<ContentFile> contentFile);
 
 public record UserQuizzesDto(List<GroupQuizzesDto> GroupQuizzesDtos);
