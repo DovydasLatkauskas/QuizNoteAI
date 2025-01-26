@@ -202,6 +202,7 @@ export default function ContentPage(){
   });
 
   const createQuizSchema = z.object({
+    questions: z.number(),
     specifications: z.string(),
   });
 
@@ -210,17 +211,20 @@ export default function ContentPage(){
     const form = useForm<z.infer<typeof createQuizSchema>>({
       resolver: zodResolver(createQuizSchema),
       defaultValues: {
+        questions: 5,
         specifications: "",
       },
     });
     function onQuizSubmit(values: z.infer<typeof createQuizSchema>) {
       const formData = new FormData();
+      formData.append("questions", values.questions.toString());
       formData.append("specifications", values.specifications);
       // console.log("Checked Items: ", checkedItems);
       // console.log("On Submit Create Quiz Form Data: ", formData.get("specifications"));
       
       // PERFORM API CALL WITH THIS DATA
       let dataSendingToAPI = {
+        questions: formData.get("questions"),
         specifications: formData.get("specifications"),
         checkedItems: checkedItems
       }
@@ -248,17 +252,33 @@ export default function ContentPage(){
                     })}
                   </div>
                   <FormItem className="mt-6">
+                    <FormLabel className="font-sans font-semibold text-lg">Number of Questions:</FormLabel>
+                    <FormControl>
+                      <Input
+                          type="number"
+                          className="w-full"
+                          placeholder="Number of questions"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                          }}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                  <FormItem className="mt-6">
                     <FormLabel className="font-sans font-semibold text-lg">Additional Specifications:</FormLabel>
                     <FormControl>
                       <Textarea
-                        className="w-full"
-                        placeholder="Focus on questions from the 18th century of France..." 
+                          className="w-full"
+                          placeholder="Focus on questions from the 18th century of France..."
 
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                        }}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                          }}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
