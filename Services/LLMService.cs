@@ -10,7 +10,7 @@ public class LLMService : ILLMService {
 
     public LLMService(AppDbContext context) {
         _context = context;
-        geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
+        geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={Environment.GetEnvironmentVariable("GEMINI_API_KEY")}";
     }
 
     public async Task<GeminiQuizResponseDto> PromptGeminiForQuiz(string prompt) {
@@ -47,7 +47,6 @@ public class LLMService : ILLMService {
             .GetProperty("text")
             .GetString();
 
-        // Extract the summary from the embedded JSON
         var startIndex = text.IndexOf("{");
         var endIndex = text.LastIndexOf("}");
         var embeddedJson = text.Substring(startIndex, endIndex - startIndex + 1);
@@ -55,6 +54,31 @@ public class LLMService : ILLMService {
         var embeddedDocument = JsonDocument.Parse(embeddedJson);
         var summary = embeddedDocument.RootElement.GetProperty("summary").GetString();
         return summary ?? "";
+    }
+
+    public async Task<string> PromptGeminiParseNotes(string base64String, string imageContentType) {
+        var prompt = $@"transcribe the text in the provided image into this JSON schema:
+                        {{
+                            ""transcribedText"" = ""<Please provide the transcribed text as a single string while preserving some structure here>""
+                        }}
+                        ";
+
+        var rsp = await PromptGeminiImage(prompt, base64String, imageContentType);
+        var jsonDocument = JsonDocument.Parse(rsp);
+        var text = jsonDocument.RootElement
+            .GetProperty("candidates")[0]
+            .GetProperty("content")
+            .GetProperty("parts")[0]
+            .GetProperty("text")
+            .GetString();
+
+        var startIndex = text.IndexOf("{");
+        var endIndex = text.LastIndexOf("}");
+        var embeddedJson = text.Substring(startIndex, endIndex - startIndex + 1);
+
+        var embeddedDocument = JsonDocument.Parse(embeddedJson);
+        var parsedText = embeddedDocument.RootElement.GetProperty("transcribedText").GetString();
+        return parsedText ?? "";
     }
 
     public async Task<string> PromptGemini(string prompt) {
@@ -72,7 +96,46 @@ public class LLMService : ILLMService {
             }
         };
 
-        string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
+        string jsonBody = JsonSerializer.Serialize(requestBody);
+
+        using var httpClient = new HttpClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Post, geminiUrl)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8,  "application/json")
+        };
+
+        HttpResponseMessage response = await httpClient.SendAsync(request);
+
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<string> PromptGeminiImage(string prompt, string base64String, string imageContentType) {
+        var requestBody = new
+        {
+            contents = new[]
+            {
+                new
+                {
+                    parts = new object[]
+                    {
+                        new {
+                            text = prompt
+                        },
+                        new
+                        {
+                            inline_data = new
+                            {
+                                mime_type = imageContentType,
+                                data = base64String
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        string jsonBody = JsonSerializer.Serialize(requestBody);
 
         using var httpClient = new HttpClient();
 
@@ -91,6 +154,7 @@ public interface ILLMService {
     public Task<string> PromptGemini(string prompt);
     Task<GeminiQuizResponseDto> PromptGeminiForQuiz(string prompt);
     Task<string> PromptGeminiSummary(string combinedPrompt);
+    Task<string> PromptGeminiParseNotes(string base64String, string imageContentType);
 }
 
 public record GeminiQuizResponseDto

@@ -179,7 +179,8 @@ public static class ApiEndpoints {
 
         app.MapPost("/insert-file", [IgnoreAntiforgeryToken] async (
             string fileName, string groupName, string? subGroupName, IFormFile file,
-            IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
+            IContentService contentService, ILLMService llmService,
+            HttpContext httpContext, UserManager<User> userManager) =>
         {
             var user = await userManager.GetUserAsync(httpContext.User);
             if (user is null) {
@@ -211,6 +212,12 @@ public static class ApiEndpoints {
             else if (ct == "text/plain") {
                 using var reader = new StreamReader(file.OpenReadStream());
                 text = await reader.ReadToEndAsync();
+            }
+            else if (ct == "image/png" || ct == "image/jpeg" || ct == "image/webp" || ct == "image/heic" || ct == "image/heif") {
+                byte[] imageBytes = await File.ReadAllBytesAsync(tempPath);
+                string base64String = Convert.ToBase64String(imageBytes);
+
+                text = await llmService.PromptGeminiParseNotes(base64String, ct);
             }
             else {
                 return Results.BadRequest("Not implemented: other filetype support.");
