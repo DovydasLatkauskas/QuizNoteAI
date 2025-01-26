@@ -61,20 +61,16 @@ public class ContentService : IContentService {
 
         var outp = new UserTreeDto(new List<GroupTreeDto>());
         foreach (var grp in grps) {
-            var gt = new GroupTreeDto(grp.Name, grp.Colour, new List<SubGroupDto>(), new List<ContentFilePropsDto>());
+            var gt = new GroupTreeDto(grp.Name, grp.Colour, new List<SubGroupDto>(), new List<ContentFile>());
 
             foreach (var sg in grp.Subgroups) {
-                var sgDto = new SubGroupDto(new List<ContentFilePropsDto>());
+                var sgDto = new SubGroupDto(new List<ContentFile>());
 
-                foreach (var cf in sg.ContentFiles) {
-                    sgDto.contentFileProperties.Add(new ContentFilePropsDto(cf.Name, cf.UploadedAtUtc));
-                }
+                sgDto.contentFile.AddRange(sg.ContentFiles);
                 gt.subGroups.Add(sgDto);
             }
 
-            foreach (var cf in grp.ContentFiles) {
-                gt.contentFileProperties.Add(new ContentFilePropsDto(cf.Name, cf.UploadedAtUtc));
-            }
+            gt.contentFile.AddRange(grp.ContentFiles);
             outp.gt.Add(gt);
         }
 
@@ -205,9 +201,8 @@ public interface IContentService {
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
-public record GroupTreeDto(string groupName, string groupColour, List<SubGroupDto> subGroups, List<ContentFilePropsDto> contentFileProperties);
-public record SubGroupDto(List<ContentFilePropsDto> contentFileProperties);
-public record ContentFilePropsDto(string name, DateTime uploadedAt);
+public record GroupTreeDto(string groupName, string groupColour, List<SubGroupDto> subGroups, List<ContentFile> contentFile);
+public record SubGroupDto(List<ContentFile> contentFile);
 
 public record UserQuizzesDto(List<GroupQuizzesDto> GroupQuizzesDtos);
 public record GroupQuizzesDto(string group, List<Quiz> quizzes);

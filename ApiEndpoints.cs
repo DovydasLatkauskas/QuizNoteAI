@@ -91,8 +91,18 @@ public static class ApiEndpoints {
             return Results.Json(responseBody);
         });
 
-        app.MapPost("/GeminiSummarize", async (ILLMService llmService, string idsOfFilesString,
-            IContentService contentService) => {
+        app.MapPost("/GeminiSummarize", async (string idsOfFilesString,
+            IContentService contentService, ILLMService llmService,
+            HttpContext httpContext, UserManager<User> userManager) => {
+
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null) {
+                return Results.Unauthorized();
+            }
+
+            var idsOfFiles = idsOfFilesString.Split(",").ToList().Select(Guid.Parse).ToList();
+            List<ContentFile> cfs = await contentService.GetContentFilesByIds(idsOfFiles, user.Id);
+
             string combinedPrompt = $@"Please summarize the information provided. Focus on the key points, important concepts, and any notable details which might be necessary to study the material. Keep the summary concise, clear, and to the point. Provide the answer .\n\n +
                                     Please summarize the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
