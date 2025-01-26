@@ -79,12 +79,13 @@ public record GeminiQuizResponseDto
     public record QuizDto
     {
         public string title { get; init; }
+        public string description { get; init; }
         public List<QuestionDto> questions { get; init; }
     }
 
     public record QuestionDto
     {
-        public string questions { get; init; }
+        public string question { get; init; }
         public List<string> answers { get; init; }
         public string correctAnswer { get; init; }
         public string source { get; init; }

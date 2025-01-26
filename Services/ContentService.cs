@@ -160,9 +160,10 @@ public class ContentService : IContentService {
         var quiz = new Quiz
         {
             Title = quizDto.title,
+            Description = quizDto.description,
             Questions = quizDto.questions.Select(q => new Question
             {
-                QuestionText = q.questions,
+                QuestionText = q.question,
                 Answers = q.answers,
                 CorrectAnswer = q.correctAnswer,
                 Source = q.source
@@ -183,10 +184,10 @@ public class ContentService : IContentService {
         }
     }
 
-    public async Task<List<ContentFile>> GetContentFilesByIds(List<string> idsOfFiles, string userId) {
+    public async Task<List<ContentFile>> GetContentFilesByIds(List<Guid> idsOfFiles, string userId) {
         return await _context.ContentFiles.Include(cf => cf.Group)
             .ThenInclude(g => g.User)
-            .Where(cf => idsOfFiles.Contains(cf.Id.ToString()) && cf.Group.UserId == userId).ToListAsync();
+            .Where(cf => idsOfFiles.Contains(cf.Id)).ToListAsync();
     }
 }
 
@@ -199,7 +200,7 @@ public interface IContentService {
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
     Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
     Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId);
-    Task<List<ContentFile>> GetContentFilesByIds(List<string> idsOfFiles, string userId);
+    Task<List<ContentFile>> GetContentFilesByIds(List<Guid> idsOfFiles, string userId);
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
