@@ -5,6 +5,7 @@ import ContentPage from "@/components/ContentPage";
 import QuizzesPage from "@/components/QuizzesPage";
 import "@/app/globals.css";
 import DashboardLayout from "@/components/DashboardLayout";
+import {getUserProfile} from "../../../api/backend";
 
 export default function Dashboard() {
   return(

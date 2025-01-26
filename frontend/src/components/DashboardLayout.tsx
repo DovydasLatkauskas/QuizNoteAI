@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
   IconBooks,
@@ -14,6 +14,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import "@/app/globals.css";
+import {getUserProfile} from "../../api/backend";
 
 interface DashboardContentProps {
   firstName: string;
@@ -24,6 +25,25 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+
+  const [name, setName] = useState<string | null>(null); // Initialize state for the name
+  const [loading, setLoading] = useState<boolean>(true); // Initialize loading state
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await getUserProfile(); // Fetch profile data
+        setName(profile.data.firstName + " " + profile.data.lastName); // Update state with the fetched name
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setName("Guest"); // Fallback if there's an error
+      } finally {
+        setLoading(false); // Ensure loading is set to false once the request completes
+      }
+    };
+
+    fetchProfile(); // Call the fetch function
+  }, []); // Empty dependency array ensures this runs once when the component mounts
   const links = [
     {
       label: "Home",
@@ -56,8 +76,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   ];
   
   const [open, setOpen] = useState(false);
-  const firstName = "Schuyler";
-  const lastName = "Good";
   
   return (
     <div
@@ -81,7 +99,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <div>
             <SidebarLink
               link={{
-                label: firstName + " " + lastName,
+                label: name,
                 href: "#",
                 icon: (
                   <IconUserFilled className="text-neutral-700 dark:text-neutral-200 h-6 w-6" />

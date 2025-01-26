@@ -21,9 +21,10 @@ interface Quiz {
 
 interface ExpandableCardDemoProps {
   quizzes: Quiz[];
+  loading: boolean;
 }
 
-export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps) {
+export default function ExpandableCardDemo({ quizzes, loading }: ExpandableCardDemoProps) {
   // console.log(quizzes)
   const [active, setActive] = useState<Quiz | boolean | null>(null);
   const id = useId();
@@ -144,7 +145,7 @@ export default function ExpandableCardDemo({ quizzes }: ExpandableCardDemoProps)
         ) : null}
       </AnimatePresence>
       <ul className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
-        {quizzes.map((card : any) => (
+        {loading ? "" : quizzes.map((card : any) => (
           <motion.div
             layoutId={`card-${card.title}-${id}`}
             key={card.title}
