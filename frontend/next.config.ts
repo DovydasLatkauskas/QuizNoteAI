@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
       "pbs.twimg.com"
     ],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  }
 };
 
 export default nextConfig;

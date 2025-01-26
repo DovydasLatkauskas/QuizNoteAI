@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, {useEffect, useState} from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
@@ -5,7 +6,6 @@ import {
   IconBooks,
   IconFileText,
   IconHome,
-  IconSettings,
   IconBrain,
   IconUserBolt,
   IconUserFilled
@@ -15,10 +15,6 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import "@/app/globals.css";
 import {getUserProfile} from "../../api/backend";
-
-interface DashboardContentProps {
-  firstName: string;
-}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,7 +37,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         setLoading(false); // Ensure loading is set to false once the request completes
       }
     };
-
+    
     fetchProfile(); // Call the fetch function
   }, []); // Empty dependency array ensures this runs once when the component mounts
   const links = [

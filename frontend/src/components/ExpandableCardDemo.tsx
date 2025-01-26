@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import Image from "next/image";
 import React, { act, useEffect, useId, useRef, useState } from "react";

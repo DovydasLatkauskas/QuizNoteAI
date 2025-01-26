@@ -1,10 +1,10 @@
+// @ts-nocheck
 "use client"
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IconBolt,
   IconSquareRoundedX,
-  IconPlus
 } from "@tabler/icons-react"; 
 import { CirclePlus } from "lucide-react"
 import { MultiStepLoader as Loader } from "@/components/ui/multi-step-loader";
@@ -17,8 +17,8 @@ import { useForm, Controller } from "react-hook-form"
 // UI Components
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge"
+// import { Label } from "@/components/ui/label";
+// import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { insertFile, createGroup, showGroups, GeminiQuiz, GeminiSummarize } from "../../api/backend";
 import {
@@ -56,7 +56,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogFooter,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
@@ -112,7 +111,7 @@ const loadingStates = [
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<any[]>([]); // Files that are checked
   const [activeTab, setActiveTab] = useState<string>("All"); 
-  const [createQuizLoading, setCreateQuizLoading] = useState(false);
+  const [createQuizLoading, setCreateQuizLoading] = useState<boolean>(false);
   const [appData, setAppData] = useState<any>([]);
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
 

@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getUserProfile } from "../../api/backend";
 import BentoGridThirdDemo from "@/components/BentoGridThirdDemo";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import Books1 from "@/../public/thumbnails/thumbnail1.jpg"
-import ExpandableCardDemo from "./ExpandableCardDemo";
-
 
 export default function HomePage() {
     const [name, setName] = useState<string | null>(null); // Initialize state for the name

@@ -8,14 +8,12 @@ import {
   IconFileBroken,
   IconSignature,
   IconTableColumn,
-  IconArrowRight,
   IconVideoFilled,
   IconFileWord,
   IconHeadphones
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Icon } from "lucide-react";
 import Sleep from "@/../public/Sleep.png";
 
 export default function BentoGridThirdDemo() {
