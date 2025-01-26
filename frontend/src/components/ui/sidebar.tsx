@@ -7,7 +7,7 @@ import { IconMenu2, IconX } from "@tabler/icons-react";
 import "@/app/globals.css";
 
 interface Links {
-  label: string;
+  label: string | null;
   href: string;
   icon: React.JSX.Element | React.ReactNode;
 }
