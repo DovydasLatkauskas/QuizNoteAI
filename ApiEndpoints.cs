@@ -21,7 +21,7 @@ public static class ApiEndpoints {
                     return Results.Unauthorized();
                 }
 
-                var quizzesResponse = contentService.GetUserQuizzesDto(user.Id);
+                var quizzesResponse = await contentService.GetUserQuizzesDto(user.Id);
 
                 return Results.Json(quizzesResponse);
         });

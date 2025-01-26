@@ -132,16 +132,10 @@ public class ContentService : IContentService {
 
 
     public async Task<UserQuizzesDto> GetUserQuizzesDto(string userId) {
-        var usr = await _context.Users
-            .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
-            .ThenInclude(q => q.Sources)
-            .Include(u => u.Groups).ThenInclude(g => g.Quizzes)
-            .ThenInclude(q => q.Questions).ThenInclude(q => q.Answers)
-            .FirstAsync(u=> u.Id == userId);
-        var quizzes = usr.Groups
-            .Select(g=> new GroupQuizzesDto(g.Name, g.Quizzes));
+        var qzs = await _context.Groups.Where(g => g.UserId == userId)
+            .Select(g=> new GroupQuizzesDto(g.Name, g.Quizzes)).ToListAsync();
 
-        return new UserQuizzesDto(quizzes.ToList());
+        return new UserQuizzesDto(qzs);
     }
 
     public async Task<bool> SaveGeminiQuiz(GeminiQuizResponseDto responseBody, string userId, string groupId) {
@@ -197,4 +191,4 @@ public record UserTreeDto(List<GroupTreeDto> gt);
 public record GroupTreeDto(string groupName, string groupId, string groupColour, List<ContentFile> contentFiles);
 
 public record UserQuizzesDto(List<GroupQuizzesDto> GroupQuizzesDtos);
-public record GroupQuizzesDto(string group, List<Quiz> quizzes);
+public record GroupQuizzesDto(string groupName, List<Quiz> quizzes);

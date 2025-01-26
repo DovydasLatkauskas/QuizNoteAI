@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace WebApiTemplate.Models;
 
 public class Quiz
@@ -11,6 +13,7 @@ public class Quiz
 
     // nav and fk props
     public Guid GroupId { get; set; }
+    [JsonIgnore]
     public Group Group { get; set; }
 }
 
