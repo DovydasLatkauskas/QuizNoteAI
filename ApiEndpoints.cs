@@ -31,7 +31,7 @@ public static class ApiEndpoints {
                 return Results.Unauthorized();
             }
 
-            var idsOfFiles = idsOfFilesString.Split(",").ToList();
+            var idsOfFiles = idsOfFilesString.Split(",").ToList().Select(Guid.Parse).ToList();
 
             string userPrompt = "";
 
@@ -40,6 +40,7 @@ public static class ApiEndpoints {
                                     {{
                                       ""quiz"": {{
                                         ""title"": ""<Please provide the title of the quiz fewer than 30 characters>"",
+                                        ""description"": ""<Please provide a description for the quiz>"",
                             
                                         ""questions"": [
                                           {{
@@ -94,7 +95,7 @@ public static class ApiEndpoints {
 
             List<ContentFile> cfs = await contentService.GetContentFilesByIds(idsOfFiles, user.Id);
 
-            // TODO: only for testing`
+            // TODO: only for testing
             string[] fileContent =
             {
                 "Whales are a widely distributed and diverse group of fully aquatic placental marine mammals. As an informal and colloquial grouping, they correspond to large members of the infraorder Cetacea, i.e. all cetaceans apart from dolphins and porpoises. Dolphins and porpoises may be considered whales from a formal, cladistic perspective. Whales, dolphins and porpoises belong to the order Cetartiodactyla, which consists of even-toed ungulates. Their closest non-cetacean living relatives are the hippopotamuses, from which they and other cetaceans diverged about 54 million years ago. The two parvorders of whales, baleen whales (Mysticeti) and toothed whales (Odontoceti), are thought to have had their last common ancestor around 34 million years ago. Mysticetes include four extant (living) families: Balaenopteridae (the rorquals), Balaenidae (right whales), Cetotheriidae (the pygmy right whale), and Eschrichtiidae (the grey whale). Odontocetes include the Monodontidae (belugas and narwhals), Physeteridae (the sperm whale), Kogiidae (the dwarf and pygmy sperm whale), and Ziphiidae (the beaked whales), as well as the six families of dolphins and porpoises which are not considered whales in the informal sense.",
@@ -121,7 +122,7 @@ public static class ApiEndpoints {
             return Results.Json(responseBody);
         });
 
-        app.MapPost("/GeminiSummarize", async (ILLMService llmService, [FromBody]List<string> filesToInclude,
+        app.MapPost("/GeminiSummarize", async (ILLMService llmService, string idsOfFilesString,
             IContentService contentService) => {
             string combinedPrompt = $@"Please summarize the information provided. Focus on the key points, important concepts, and any notable details which might be necessary to study the material. Keep the summary concise, clear, and to the point. Provide the answer .\n\n +
                                     Please summarize the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
