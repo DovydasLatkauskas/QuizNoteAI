@@ -180,4 +180,14 @@ export const showGroups = async () => {
         throw error;
     }
 }
+export const GeminiSummarize = async (nameOfSummaryDoc, groupId, idsOfFilesString, userPrompt) => {
+
+    try {
+        const response = await apiClient.get('/GeminiSummarize?nameOfSummaryDoc=' + nameOfSummaryDoc + '&groupID=' + groupId + '&idsOfFilesString=' + idsOfFilesString + '&userPrompt=' + userPrompt);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching summary:', error);
+        throw error;
+    }
+}
 
