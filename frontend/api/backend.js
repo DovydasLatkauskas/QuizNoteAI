@@ -15,6 +15,14 @@ const apiClient = axios.create({
     },
     withCredentials: true, // Allows sending cookies with the request
 });
+const apiClient2 = axios.create({
+    baseURL: 'http://localhost:8080', // Adjust the base URL as needed
+    headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': 'Bearer ' + token
+    },
+    withCredentials: true, // Allows sending cookies with the request
+});
 
 export const createTestUser = async () => {
     try {
@@ -90,16 +98,10 @@ export const getUserProfile = async () => {
     }
 }
 export const insertFile = async (fileData, fileName, fileGroup) => {
+    console.log(fileData);
     try {
-        const response = await apiClient.post('/insert-file',{
-            fileName: fileName,
-            fileGroup: fileGroup,
-            fileSubgroup: "",
-            file: fileData,
-        },{
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+        
+        const response = await apiClient2.post('/insert-file?fileName=' + fileName + '&groupname=' + fileGroup , fileData, {
         });
         return response.data;
     } catch (error) {
@@ -124,10 +126,10 @@ export const insertFile = async (fileData, fileName, fileGroup) => {
     }
 }
 
-export const createGroup = async (groupinfo) => {
-    console.log(groupinfo);
+export const createGroup = async (groupName) => {
+    console.log(groupName);
     try {
-        const response = await apiClient.post('/create-group', {'groupName': groupinfo}, {
+        const response = await apiClient.post('/create-group?groupName=' + groupName, {
 
         });
         return response.data;
@@ -136,3 +138,28 @@ export const createGroup = async (groupinfo) => {
         throw error;
     }
 }
+export const deleteGroup = async (groupName) => {
+    console.log(groupName);
+    try {
+        const response = await apiClient.post('/create-group?groupName=' + groupName, {
+
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        throw error;
+    }
+}
+export const renameGroup = async (groupName) => {
+    console.log(groupName);
+    try {
+        const response = await apiClient.post('/create-group?oldGroupName=' + oldGroupName + '&newGroupName=' + newGroupName, {
+
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        throw error;
+    }
+}
+

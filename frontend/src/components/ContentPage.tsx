@@ -126,9 +126,8 @@ export default function ContentPage(){
 
   const handleCreateGroup = async () => {
     console.log("Creating group: ", groupName);
-    const data = ({'groupName': groupName});
     try {
-      const response = await createGroup(data);
+      const response = await createGroup(groupName);
       console.log("Group created successfully", response);    
     }  
     catch (error) {
@@ -291,10 +290,12 @@ export default function ContentPage(){
       const formData = new FormData();
       formData.append("file", values.file); // `values.file` now contains the actual `File` object
       console.log("File: ", formData.get("file"));
-
+      console.log(values)
+      console.log(values.file);
       const file = formData.get("file") as File | null;
       if (file) {
         console.log("File Name: ", file.name);
+        console.log(file);
       
         console.log("File Group: ", values.selectGroup);
         // Perform your API call with `formData`
