@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { insertFile, createGroup } from "../../api/backend";
+import { insertFile, createGroup, showGroups } from "../../api/backend";
 import {
   Form,
   FormControl,
@@ -123,6 +123,7 @@ export function SelectGroupMenu({ control } : { control: any }) {
 export default function ContentPage(){
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [groupName, setGroupName] = useState<string>("");
+  const [fgroups, setGroups] = useState<any[]>([]);
 
   const handleCreateGroup = async () => {
     console.log("Creating group: ", groupName);
@@ -149,6 +150,21 @@ export default function ContentPage(){
       return () => clearTimeout(timer);
     }
   }, [createQuizLoading]);
+  
+  useEffect(() => {
+    const fetchGroups = async () => {
+        try {
+            const data = await showGroups();
+            setGroups(data); // Store the fetched groups in state
+            console.log("Groups: ", data);
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+        }
+    };
+
+    fetchGroups();
+
+}, []);
 
   let groups = [
     {

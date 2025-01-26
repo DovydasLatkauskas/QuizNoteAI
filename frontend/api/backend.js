@@ -126,12 +126,10 @@ export const insertFile = async (fileData, fileName, fileGroup) => {
     }
 }
 
-export const createGroup = async (groupName) => {
+export const createGroup = async (groupName, groupColour) => {
     console.log(groupName);
     try {
-        const response = await apiClient.post('/create-group?groupName=' + groupName, {
-
-        });
+        const response = await apiClient.post('/create-group?groupName=' + groupName + 'groupColour' + groupColour);
         return response.data;
     } catch (error) {
         console.error('Error creating group:', error);
@@ -159,6 +157,26 @@ export const renameGroup = async (groupName) => {
         return response.data;
     } catch (error) {
         console.error('Error deleting group:', error);
+        throw error;
+    }
+}
+export const GeminiQuiz = async (groupId, idsOfFilesString, numberOfQuestions, userPrompt) => {
+    try {
+        const response = await apiClient.get('/GeminiQuiz?groupID=' + groupId + '&idsOfFilesString=' + idsOfFilesString + '&numberOfQuestions=' + numberOfQuestions + '&userPrompt=' + userPrompt);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching quiz:', error);
+        throw error;
+    }
+}
+
+export const showGroups = async () => {
+    try {
+        const response = await apiClient.get('/show-groups');
+        console.log(response);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching groups:', error);
         throw error;
     }
 }
