@@ -129,7 +129,7 @@ export const insertFile = async (fileData, fileName, fileGroup) => {
 export const createGroup = async (groupName, groupColour) => {
     console.log(groupName);
     try {
-        const response = await apiClient.post('/create-group?groupName=' + groupName + 'groupColour' + groupColour);
+        const response = await apiClient.post('/create-group?groupName=' + groupName + '&groupColour' + groupColour);
         return response.data;
     } catch (error) {
         console.error('Error creating group:', error);

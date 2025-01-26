@@ -121,14 +121,19 @@ export function SelectGroupMenu({ control } : { control: any }) {
 }
 
 export default function ContentPage(){
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
-  const [groupName, setGroupName] = useState<string>("");
-  const [fgroups, setGroups] = useState<any[]>([]);
-
-  const handleCreateGroup = async () => {
-    console.log("Creating group: ", groupName);
+  const [checkedItems, setCheckedItems] = useState<string[]>([]); // Files that are checked
+  const [activeTab, setActiveTab] = useState<string>("All"); 
+  const [createQuizLoading, setCreateQuizLoading] = useState(false);
+  const [appData, setAppData] = useState<any>([]);
+  // Modals 
+  const [contentModalOpen, setContentModalOpen] = useState<boolean>(true);
+  const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
+  const [createGroupModalOpen, setCreateGroupModalOpen] = useState<boolean>(false);
+  
+  const handleCreateGroup = async (groupName : string, colour : string) => {
+    console.log("Creating group: ", groupName, " With colour: ", colour);
     try {
-      const response = await createGroup(groupName);
+      const response = await createGroup(groupName, colour);
       console.log("Group created successfully", response);    
     }  
     catch (error) {
@@ -136,10 +141,6 @@ export default function ContentPage(){
       alert('Failed to create group');
     }
   }
-  const [activeTab, setActiveTab] = useState<string>("All"); 
-  const [contentModalOpen, setContentModalOpen] = useState<boolean>(true);
-  const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
-  const [createQuizLoading, setCreateQuizLoading] = useState(false);
 
   useEffect(() => {
     if (createQuizLoading) {
@@ -153,18 +154,27 @@ export default function ContentPage(){
   
   useEffect(() => {
     const fetchGroups = async () => {
-        try {
-            const data = await showGroups();
-            setGroups(data); // Store the fetched groups in state
-            console.log("Groups: ", data);
-        } catch (error) {
-            console.error('Error fetching groups:', error);
+      try {
+        const data = await showGroups(); // Fetch the groups from your API
+        let groupsData = data["gt"];
+        console.log("Fetched Groups:", groupsData);
+  
+        // Ensure the data is an array and update state
+        if (Array.isArray(groupsData)) {
+          setAppData(groupsData);
+        } else {
+          console.error("Unexpected data format:", groupsData);
+          setAppData([]);
         }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        setAppData([]); // Set fallback state on error
+      }
     };
-
-    fetchGroups();
-
-}, []);
+  
+    fetchGroups(); // Call the async function
+  }, []); // Empty dependency array ensures this runs only once on mount
+  
 
   let groups = [
     {
@@ -221,6 +231,14 @@ export default function ContentPage(){
     questions: z.number(),
     specifications: z.string(),
   });
+
+  const createGroupSchema = z.object({
+    groupName: z.string(),
+    colour: z.string(),
+  });
+
+
+
 
   // Forms
   function CreateQuizForm() {
@@ -312,7 +330,7 @@ export default function ContentPage(){
         </Form>
       </div>
     );
-  }
+  };
 
   function InputContentForm() {
     const form = useForm<z.infer<typeof formSchema>>({
@@ -372,7 +390,7 @@ export default function ContentPage(){
                   <FormControl>
                     <Input
                       type="file"
-                      accept=".pdf,.mp4,.mp3" // Restrict file types if needed
+                      accept=".pdf,.mp4,.mp3,.png,.jpeg,.webp,.heif,.heic,.txt"
                       onChange={(e) => {
                         field.onChange(e.target.files); // Pass the `FileList` to react-hook-form
                       }}
@@ -391,12 +409,75 @@ export default function ContentPage(){
           <Button type="submit">Submit</Button>
         </form>
       </Form>
-    );
-  }
+    )
+  };
 
-function UploadContentDialog({ contentModalOpen, setContentModalOpen }: { 
-  contentModalOpen: boolean,
-  setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
+  function CreateGroupForm() {
+    const form = useForm<z.infer<typeof createGroupSchema>>({
+      resolver: zodResolver(createGroupSchema),
+      defaultValues: {
+        groupName: "",
+        colour: "#878787",
+      },
+    })
+    function onCreateGroupFormSubmit(values: z.infer<typeof createGroupSchema>) {
+      const formData = new FormData();
+      // formData.append("groupName", values.groupName);
+      // formData.append("colour", values.colour);
+      console.log("On Submit Create Group Form Data: ");
+      // Perform your API call with `formData`
+      handleCreateGroup(values.groupName, values.colour);
+    }
+
+    return (
+      <div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onCreateGroupFormSubmit)} className="space-y-8 border border-neutral-200 dark:border-neutral-700 p-4 rounded-md">
+          <FormField
+            control={form.control}
+            name="groupName"
+            render={({ field }) => (
+              <FormItem className="w-64">
+                <FormLabel>Group Name:</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="groupName"
+                    {...field} // Use field directly for handling value, onChange, etc.
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="colour"
+            render={({ field }) => (
+              <FormItem className="w-64">
+                <FormLabel>Colour:</FormLabel>
+                <FormControl>
+                  <Input
+                    type="color"
+                    {...field} // Use field directly for handling value, onChange, etc.
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+            <Button type="submit">Submit</Button>
+          </form>
+        </Form>
+      </div>
+    )
+  };
+
+
+  // Dialogs
+  function UploadContentDialog({ contentModalOpen, setContentModalOpen }: { 
+    contentModalOpen: boolean,
+    setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
   }) {
     return (
       <Dialog >
@@ -419,9 +500,9 @@ function UploadContentDialog({ contentModalOpen, setContentModalOpen }: {
         </DialogContent>
       </Dialog>
     )
-  }
+  };
 
-function CreateQuizDialog({ buttonDisabled, quizModalOpen, setQuizModalOpen }: {
+  function CreateQuizDialog({ buttonDisabled, quizModalOpen, setQuizModalOpen }: {
     buttonDisabled: boolean,
     quizModalOpen: boolean,
     setQuizModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
@@ -470,99 +551,152 @@ function CreateQuizDialog({ buttonDisabled, quizModalOpen, setQuizModalOpen }: {
       </DialogContent>
     </Dialog>
   )
-}
+  };
 
-const Content: React.FC<ContentProps> = ({ index, filePath, content, type, checked, onChange }) => {
-  return (
-    <AnimatePresence>
-      <motion.div
-        whileHover={{
-          scale: 1.05, // Slightly increase size on hover
-          cursor: "pointer", // Change cursor to pointer
-        }}
-        animate={{
-          scale: checked ? 1.03 : 1, // Increase size if checked
-        }}
-        transition={{
-          duration: 0.2, // Animation duration
-          ease: "easeInOut", // Smooth easing
-        }}
-      >
-        <Card key={index} className={`w-72 ${checked ? "bg-blue-100" : ""}`}>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={onChange}
-              className="h-4 w-4 rounded"
-            />
-            <CardTitle>{filePath}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>{content.substring(0, 30)}...</CardDescription>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+  function CreateGroupDialog({ contentModalOpen, setContentModalOpen }: {
+    contentModalOpen: boolean,
+    setContentModalOpen: React.Dispatch<React.SetStateAction<boolean>> 
+  }){
+    return (
+      <Dialog >
+        <DialogTrigger asChild>
+          <Button onClick={() => {setContentModalOpen(true)}} className="bg-[#F4F4F5] text-black hover:bg-gray-300">
+            <CirclePlus/> Create Group
+          </Button>
+        </DialogTrigger>
 
-  function GroupTabsMenu({ groups } : { groups: any }) {
+        <DialogContent className="max-w-fit">
+          <DialogHeader >
+            <DialogTitle>Create Group</DialogTitle>
+            <DialogDescription>
+              This will be were you can organize your content.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <CreateGroupForm></CreateGroupForm>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  };
 
-    let allFiles = groups.map((group: any) => group.files).flat();
-    groups.unshift({title: "All", files: allFiles});
-    let numOfCols = "grid-cols-" + groups.length;
+  const Content: React.FC<ContentProps> = ({ index, filePath, content, type, checked, onChange }) => {
+    return (
+      <AnimatePresence>
+        <motion.div
+          whileHover={{
+            scale: 1.05, // Slightly increase size on hover
+            cursor: "pointer", // Change cursor to pointer
+          }}
+          animate={{
+            scale: checked ? 1.03 : 1, // Increase size if checked
+          }}
+          transition={{
+            duration: 0.2, // Animation duration
+            ease: "easeInOut", // Smooth easing
+          }}
+        >
+          <Card key={index} className={`w-72 ${checked ? "bg-blue-100" : ""}`}>
+            <CardHeader className="flex flex-row items-center gap-2">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={onChange}
+                className="h-4 w-4 rounded"
+              />
+              <CardTitle>{filePath}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>{content.substring(0, 30)}...</CardDescription>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </AnimatePresence>
+    );
+  };
+
+  function GroupTabsMenu() {
+
+    let allFiles = appData.map((group: any) => group.contentFiles).flat();
+    let curGroups = []
+    // add all groups from app data to curGroups
+    appData.forEach((group: any) => {
+      curGroups.push(
+        {
+          groupName: group.groupName, 
+          files: group.contentFiles,
+          groupId: group.groupId,
+          groupColor: group.groupColor
+        }
+      )
+    })
+    curGroups.unshift(
+      {
+        groupName: "All", 
+        files: allFiles,
+        groupId: "",
+        groupColor: "#878787"
+      }
+    );
+    let numOfCols = "grid-cols-" + curGroups.length;
     const defaultGroup = groups.length > 0 ? groups[0].title : "";
     
     return(
-      <Tabs defaultValue={defaultGroup} className="w-full" value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex flex-row gap-2 items-center">
-          <TabsList className={` gap-4`}>
-            {groups.map((group: any, index: number) => (
-              <TabsTrigger key={index} value={group.title}>{group.title}</TabsTrigger>
-            ))}
-          </TabsList>
-          <Button 
-            className="h-7 bg-blue-500"
-            onClick={() => {
-              // Create a new group
-              // TODO: API Call
-            }}
-          >
-            <IconPlus/>
-          </Button>
-        </div>
-
-  
-        {groups.map((group: any, index: number) => (
-          <TabsContent key={index} value={group.title}>
-            <Card className="">
-              <CardHeader>
-                <CardTitle>{group.title}</CardTitle>
-                <CardDescription>
-                  All your files associated with {group.title}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-row gap-4 flex-wrap">
-                {group.files.map((file: any, index: number) => (
-                  <Content
-                    key={index}
-                    index={index}
-                    filePath={file.filepath}
-                    content={file.content}
-                    type={file.type}
-                    checked={checkedItems.includes(file.filepath)}
-                    onChange={handleCheckboxChange(file.filepath)}
-                  />
+      !appData 
+      ? 
+        (<div>
+          Loading...
+          <Button onClick={()=>{console.log(appData)}}>Test</Button>
+        </div>)
+      : 
+        (
+          <Tabs defaultValue={defaultGroup} className="w-full" value={activeTab} onValueChange={setActiveTab}>
+            <div className="flex flex-row gap-2 items-center">
+              <TabsList className={` gap-4`}>
+                {curGroups.map((group: any, index: number) => (
+                  <TabsTrigger key={index} value={group.groupName}>{group.groupName}</TabsTrigger>
                 ))}
-              </CardContent>
-              <CardFooter>
-                {/* <Button className="bg-red-500" onClick={() => {}}>Delete Group</Button> */}
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
+              </TabsList>
+              <CreateGroupDialog contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
+            </div>
+      
+            {curGroups.map((group: any, index: number) => (
+              <TabsContent key={index} value={group.groupName}>
+                <Card className="">
+                  <CardHeader>
+                    <CardTitle>{group.groupName}</CardTitle>
+                    <CardDescription>
+                      All your files associated with {group.groupName}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-row gap-4 flex-wrap">
+                    {Array.isArray(group.files) && group.files.length > 0 ? (
+                      group.files.map((file: any, index: number) => (
+                        <Content
+                          key={index}
+                          index={index}
+                          filePath={file.name}
+                          content={file.text}
+                          type={`.${file.name.split('.').pop()}`} // Extract file extension
+                          checked={checkedItems.includes(file.name)}
+                          onChange={handleCheckboxChange(file.name)}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-gray-500">
+                        No files.
+                        {/* <Button onClick={()=>{console.log("TESTTESTTESTTEST: ",group.files)}}>Click for test</Button>   */}
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter>
+                    {/* <Button className="bg-red-500" onClick={() => {}}>Delete Group</Button> */}
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
+        )
     )
   }
 
@@ -582,7 +716,7 @@ const Content: React.FC<ContentProps> = ({ index, filePath, content, type, check
             null
           }
         </div>
-        <GroupTabsMenu groups={groups} />
+        <GroupTabsMenu/>
         
         {/* LOADING MECHANISM */}
         {quizModalOpen && (
