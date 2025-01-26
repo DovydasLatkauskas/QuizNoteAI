@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Text;
 using AssemblyAI;
 using AssemblyAI.Transcripts;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using UglyToad.PdfPig;
 using WebApiTemplate.Models;
 using WebApiTemplate.Services;
 
@@ -218,6 +221,18 @@ public static class ApiEndpoints {
                 string base64String = Convert.ToBase64String(imageBytes);
 
                 text = await llmService.PromptGeminiParseNotes(base64String, ct);
+            }
+            else if (file.ContentType == "application/pdf") {
+                StringBuilder sb = new();
+                using (PdfDocument doc = PdfDocument.Open(tempPath)) {
+                    foreach (var page in doc.GetPages()) {
+                        var words = page.GetWords();
+                        sb.Append(string.Join(' ', words));
+                        sb.Append(' ');
+                    }
+                }
+
+                text = sb.ToString();
             }
             else {
                 return Results.BadRequest("Not implemented: other filetype support.");
