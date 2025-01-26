@@ -23,7 +23,8 @@ public static class ApiEndpoints {
                 return Results.Json(quizzesResponse);
         });
 
-        app.MapGet("/GeminiQuiz", async (string groupId, string idsOfFilesString,
+        app.MapGet("/GeminiQuiz", async (string groupId, string idsOfFilesString, int numberOfQuestions,
+            string userPrompt,
             ILLMService llmService, IContentService contentService,
             HttpContext httpContext, UserManager<User> userManager) => {
             var user = await userManager.GetUserAsync(httpContext.User);
@@ -33,9 +34,7 @@ public static class ApiEndpoints {
 
             var idsOfFiles = idsOfFilesString.Split(",").ToList().Select(Guid.Parse).ToList();
 
-            string userPrompt = "";
-
-            string combinedPrompt = $@"Generate a 5-question multiple choice quiz based on the information provided in the attached file. Ensure the questions cover a range of key concepts, and include four answer choices for each question, with the correct answer clearly indicated. The questions should be clear and concise. Ensure that the answer choices are similar in content and structure and that it’s not immediately obvious which option is correct. Provide four plausible answer choices for each question, with only one correct answer. Label the answers a through d. Additonally, include the number coressponding to the source from where the information was taken.
+            string combinedPrompt = $@"Generate a {numberOfQuestions}-question multiple choice quiz based on the information provided in the attached file. Ensure the questions cover a range of key concepts, and include four answer choices for each question, with the correct answer clearly indicated. The questions should be clear and concise. Ensure that the answer choices are similar in content and structure and that it’s not immediately obvious which option is correct. Provide four plausible answer choices for each question, with only one correct answer. Label the answers a through d. Additonally, include the number coressponding to the source from where the information was taken.
                                     Please provide the following content strictly in a valid JSON format. The response should not include any extra non-JSON characters or code block formatting. The output should follow the structure below:
                                     {{
                                       ""quiz"": {{
@@ -43,39 +42,6 @@ public static class ApiEndpoints {
                                         ""description"": ""<Please provide a description for the quiz>"",
                             
                                         ""questions"": [
-                                          {{
-                                            ""question"": ""<Please provide the question>"",
-                                            ""answers"": [
-                                              ""<Option 1>"",
-                                              ""<Option 2>"",
-                                              ""<Option 3>"",
-                                              ""<Option 4>""
-                                            ],
-                                            ""correctAnswer"": ""<Please provide the correct answer>"",
-                                            ""source"": ""<Source of the question>""
-                                          }},
-                                          {{
-                                            ""question"": ""<Please provide the question>"",
-                                            ""answers"": [
-                                              ""<Option 1>"",
-                                              ""<Option 2>"",
-                                              ""<Option 3>"",
-                                              ""<Option 4>""
-                                            ],
-                                            ""correctAnswer"": ""<Please provide the correct answer>"",
-                                            ""source"": ""<Source of the question>""
-                                          }},
-                                          {{
-                                            ""question"": ""<Please provide the question>"",
-                                            ""answers"": [
-                                              ""<Option 1>"",
-                                              ""<Option 2>"",
-                                              ""<Option 3>"",
-                                              ""<Option 4>""
-                                            ],
-                                            ""correctAnswer"": ""<Please provide the correct answer>"",
-                                            ""source"": ""<Source of the question>""
-                                          }},
                                           {{
                                             ""question"": ""<Please provide the question>"",
                                             ""answers"": [
@@ -117,7 +83,7 @@ public static class ApiEndpoints {
 
             var responseBody = await llmService.PromptGeminiForQuiz(combinedPrompt);
 
-            bool saveRsp = await contentService.SaveGeminiQuiz(responseBody, user.Id, groupId);
+            await contentService.SaveGeminiQuiz(responseBody, user.Id, groupId);
 
             return Results.Json(responseBody);
         });
@@ -150,7 +116,7 @@ public static class ApiEndpoints {
     }
 
     private static void ContentEndpoints(this WebApplication app) {
-        app.MapPost("/create-group", async (string groupName,
+        app.MapPost("/create-group", async (string groupName, string groupColour,
             IContentService contentService, HttpContext httpContext, UserManager<User> userManager) =>
         {
             var user = await userManager.GetUserAsync(httpContext.User);
@@ -158,7 +124,7 @@ public static class ApiEndpoints {
                 return Results.Unauthorized();
             }
 
-            bool rsp = await contentService.CreateGroup(user.Id, groupName);
+            bool rsp = await contentService.CreateGroup(user.Id, groupName, groupColour);
             if (!rsp) {
                 return Results.Conflict("group already exists");
             }

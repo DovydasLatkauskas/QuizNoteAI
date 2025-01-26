@@ -61,7 +61,7 @@ public class ContentService : IContentService {
 
         var outp = new UserTreeDto(new List<GroupTreeDto>());
         foreach (var grp in grps) {
-            var gt = new GroupTreeDto(grp.Name, new List<SubGroupDto>(), new List<ContentFilePropsDto>());
+            var gt = new GroupTreeDto(grp.Name, grp.Colour, new List<SubGroupDto>(), new List<ContentFilePropsDto>());
 
             foreach (var sg in grp.Subgroups) {
                 var sgDto = new SubGroupDto(new List<ContentFilePropsDto>());
@@ -81,7 +81,7 @@ public class ContentService : IContentService {
         return outp;
     }
 
-    public async Task<bool> CreateGroup(string userId, string groupName) {
+    public async Task<bool> CreateGroup(string userId, string groupName, string groupColour) {
         var grps = _context.Groups.Include(g=> g.User)
             .Where(g => g.UserId == userId).ToList();
         if (grps.Any(g=> g.Name == groupName)) {
@@ -90,6 +90,7 @@ public class ContentService : IContentService {
 
         _context.Groups.Add(new Group {
             Name = groupName,
+            Colour = groupColour,
             UserId = userId
         });
 
@@ -195,7 +196,7 @@ public interface IContentService {
     public Task<bool> SaveContentFile(ContentFile contentFile, string groupName, string? subGroupName, string userId);
     public bool CheckGroupExists(string groupName, string userId);
     Task<UserTreeDto> GetUserGroupTree(string userId);
-    Task<bool> CreateGroup(string userId, string groupName);
+    Task<bool> CreateGroup(string userId, string groupName, string groupColour);
     Task DeleteGroup(string userId, string groupName);
     Task<bool> UpdateGroupName(string userId, string oldGroupName, string newGroupName);
     Task<UserQuizzesDto> GetUserQuizzesDto(string userId);
@@ -204,7 +205,7 @@ public interface IContentService {
 }
 
 public record UserTreeDto(List<GroupTreeDto> gt);
-public record GroupTreeDto(string groupName, List<SubGroupDto> subGroups, List<ContentFilePropsDto> contentFileProperties);
+public record GroupTreeDto(string groupName, string groupColour, List<SubGroupDto> subGroups, List<ContentFilePropsDto> contentFileProperties);
 public record SubGroupDto(List<ContentFilePropsDto> contentFileProperties);
 public record ContentFilePropsDto(string name, DateTime uploadedAt);
 
