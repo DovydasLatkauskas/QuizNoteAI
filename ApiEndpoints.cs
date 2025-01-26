@@ -92,7 +92,7 @@ public static class ApiEndpoints {
         });
 
         app.MapPost("/GeminiSummarize", async (string nameOfSummaryDoc, string groupId,
-            string idsOfFilesString, string userPrompt,
+            string idsOfFilesString, string? userPrompt,
             IContentService contentService, ILLMService llmService,
             HttpContext httpContext, UserManager<User> userManager) => {
 

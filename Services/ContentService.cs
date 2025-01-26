@@ -21,7 +21,7 @@ public class ContentService : IContentService {
 
     public async Task<bool> SaveContentFile(ContentFile contentFile, string? groupName, string? groupId, string? subGroupName, string userId) {
         if (groupName is null) {
-            groupName = (await _context.Groups.FindAsync(groupId))!.Name;
+            groupName = (await _context.Groups.FindAsync(Guid.Parse(groupId!)))!.Name;
         }
 
         var grp = _context.Groups.Include(g=> g.ContentFiles)

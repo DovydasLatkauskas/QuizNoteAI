@@ -39,7 +39,22 @@ public class LLMService : ILLMService {
 
     public async Task<string> PromptGeminiSummary(string combinedPrompt) {
         var rsp = await PromptGemini(combinedPrompt);
-        return "";
+        var jsonDocument = JsonDocument.Parse(rsp);
+        var text = jsonDocument.RootElement
+            .GetProperty("candidates")[0]
+            .GetProperty("content")
+            .GetProperty("parts")[0]
+            .GetProperty("text")
+            .GetString();
+
+        // Extract the summary from the embedded JSON
+        var startIndex = text.IndexOf("{");
+        var endIndex = text.LastIndexOf("}");
+        var embeddedJson = text.Substring(startIndex, endIndex - startIndex + 1);
+
+        var embeddedDocument = JsonDocument.Parse(embeddedJson);
+        var summary = embeddedDocument.RootElement.GetProperty("summary").GetString();
+        return summary ?? "";
     }
 
     public async Task<string> PromptGemini(string prompt) {
