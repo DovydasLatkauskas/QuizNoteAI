@@ -216,7 +216,7 @@ public static class ApiEndpoints {
                 using var reader = new StreamReader(file.OpenReadStream());
                 text = await reader.ReadToEndAsync();
             }
-            else if (ct == "image/png" || ct == "image/jpeg" || ct == "image/webp" || ct == "image/heic" || ct == "image/heif") {
+            else if (ct is "image/png" or "image/jpeg" or "image/webp" or "image/heic" or "image/heif") {
                 byte[] imageBytes = await File.ReadAllBytesAsync(tempPath);
                 string base64String = Convert.ToBase64String(imageBytes);
 
