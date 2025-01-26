@@ -153,7 +153,7 @@ export default function ExpandableCardDemo({ quizzes, loading }: ExpandableCardD
           </div>
         ) : null}
       </AnimatePresence>
-      <ul className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 items-start gap-4">
+      <ul className="w-full grid grid-cols-1 md:grid-cols-3 items-start gap-4">
         {loading
           ? ""
           : quizzes

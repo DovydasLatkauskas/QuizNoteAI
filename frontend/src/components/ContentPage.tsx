@@ -114,6 +114,8 @@ export default function ContentPage(){
   const [activeTab, setActiveTab] = useState<string>("All"); 
   const [createQuizLoading, setCreateQuizLoading] = useState(false);
   const [appData, setAppData] = useState<any>([]);
+  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+
   // Modals 
   const [contentModalOpen, setContentModalOpen] = useState<boolean>(true);
   const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
@@ -153,6 +155,7 @@ export default function ContentPage(){
     GeminiQuiz(groupId, idsOfFilesString, numberOfQuestions, userPrompt)
     .then((response) => {
       console.log("Quiz created successfully", response);
+      setTriggerRefresh((prev) => !prev);
     })
     .catch((error) => {
       console.error("Failed to create quiz", error);
@@ -170,6 +173,7 @@ export default function ContentPage(){
     GeminiSummarize(nameOfSummaryDoc,groupId, idsOfFilesString, userPrompt)
     .then((response) => {
       console.log("Summary created successfully", response);
+      setTriggerRefresh((prev) => !prev);
     })
     .catch((error) => {
       console.error("Failed to create summary", error);
@@ -183,6 +187,7 @@ export default function ContentPage(){
       const response = await createGroup(groupName, colour)
       .then((response) => {
         console.log("Group created successfully", response);
+        setTriggerRefresh((prev) => !prev);
         setCreateGroupModalOpen(false);
         // Refresh the useEffect thingy
       });
@@ -224,33 +229,7 @@ export default function ContentPage(){
     };
   
     fetchGroups(); // Call the async function
-  }, []); // Empty dependency array ensures this runs only once on mount
-  
-
-  // let groups = [
-  //   {
-  //     title: "CISC 454",
-  //     files: [
-  //       {filepath: "lecture_01.mp4", type: "video", content: "0:00 - There was a man named John..."},
-  //       {filepath: "lecture_notes_02.pdf", type: "document", content: "0:00 - There was another man named Eric"},
-  //       {filepath: "lecture_03.mp4", type: "video", content: "0:00 - There "},
-  //     ]
-  //   },
-  //   {
-  //     title: "CISC 372",
-  //     files: [
-  //       {filepath: "lecture_01.mp3", type: "audio", content: "0:00 - some other description example"},
-  //       {filepath: "lecture_02.mp4", type: "video", content: "0:00 - some other description example"},
-  //     ]
-  //   },
-  //   {
-  //     title: "CISC 235",
-  //     files: [
-  //       {filepath: "lecture_01.pdf", type: "audio", content: "0:00 - some other description example"},
-  //       {filepath: "content_lecture.pdf", type: "document", content: "0:00 - some other description example"},
-  //     ]
-  //   },
-  // ]
+  }, [triggerRefresh]); // Empty dependency array ensures this runs only once on mount
 
   const handleCheckboxChange = (file: any) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -264,6 +243,7 @@ export default function ContentPage(){
     index: number;
     filePath: string;
     content: string;
+    groupColour: string;
     type: string;
     checked: boolean;
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -422,6 +402,7 @@ export default function ContentPage(){
       createSummary(values.nameOfSummaryDoc, values.specifications)
         .then((response) => {
           console.log("Summary created successfully", response);
+          setTriggerRefresh((prev) => !prev);
         })
         .catch((error) => {
           console.error("Failed to create summary", error);
@@ -535,6 +516,7 @@ export default function ContentPage(){
         insertFile(formData, file.name, values.selectGroup)
           .then((response) => {
             console.log("File uploaded successfully", response);
+            setTriggerRefresh((prev) => !prev);
           })
           .catch((error) => {
             console.error("Failed to upload file", error);
@@ -789,7 +771,7 @@ export default function ContentPage(){
     )
   };
 
-  const Content: React.FC<ContentProps> = ({ index, filePath, content, type, checked, onChange }) => {
+  const Content: React.FC<ContentProps> = ({ index, filePath, content, groupColour, type, checked, onChange }) => {
     // const renderIcon = (fileType: string) => {
     //   const fileExtension = fileType.toLowerCase();
   
@@ -804,7 +786,7 @@ export default function ContentPage(){
     //   }
     //   return <File className="w-6 h-6 text-neutral-500" />; // Default file icon
     // };
-  
+    console.log("groupColour: ", groupColour);
     return (
       <AnimatePresence>
         <motion.div
@@ -830,6 +812,7 @@ export default function ContentPage(){
                     onChange={onChange}
                     className="h-4 w-4 rounded"
                   />
+                  {/* <div className={`aspect-square w-4 rounded-full bg-[${groupColour}]`}></div> */}
                   <CardTitle className="text-blue-500">{filePath}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -911,6 +894,7 @@ export default function ContentPage(){
                           index={index}
                           filePath={file.name}
                           content={file.text}
+                          groupColour={group.groupColor}
                           type={`.${file.name.split('.').pop()}`} // Extract file extension
                           checked={checkedItems.some((item) => item.name === file.name)} // check by file name
                           onChange={handleCheckboxChange(file)}
@@ -919,9 +903,9 @@ export default function ContentPage(){
                     ) : (
                       <div className="text-gray-500">
                         No files.
-                        {/* <Button onClick={()=>{console.log("TESTTESTTESTTEST: ",group.files)}}>Click for test</Button>   */}
                       </div>
                     )}
+                    {/* <Button onClick={()=>{console.log("TESTTESTTESTTEST: ", group.groupColor)}}>Click for test</Button>   */}
                   </CardContent>
                   <CardFooter>
                     {/* <Button className="bg-red-500" onClick={() => {}}>Delete Group</Button> */}
@@ -941,15 +925,15 @@ export default function ContentPage(){
 
         <h2 className="mb-4 text-3xl font-semibold dark:text-white">Content</h2>
         <div className="flex flex-row gap-4 mb-4">
+          { contentModalOpen ? <CreateSummaryDialog buttonDisabled={checkedItems.length == 0 ? true : false} contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
+            : 
+            null
+          }
           { contentModalOpen ? <CreateQuizDialog buttonDisabled={checkedItems.length == 0 ? true : false} quizModalOpen={quizModalOpen} setQuizModalOpen={setQuizModalOpen}/> 
             : 
             null
           }
           { contentModalOpen ? <UploadContentDialog contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
-            : 
-            null
-          }
-          { contentModalOpen ? <CreateSummaryDialog buttonDisabled={checkedItems.length == 0 ? true : false} contentModalOpen={contentModalOpen} setContentModalOpen={setContentModalOpen}/>
             : 
             null
           }
